@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineMatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    :root {
+      --bg-0: #050816;
+      --bg-1: #0b1330;
+      --bg-2: #151a3d;
+      --bg-3: #2b1751;
+      --surface: rgba(12, 17, 38, 0.72);
+      --surface-strong: rgba(14, 20, 44, 0.92);
+      --surface-soft: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #f5f7ff;
+      --muted: #b9c1df;
+      --accent-a: #7ef9ff;
+      --accent-b: #a855f7;
+      --accent-c: #ff8a5b;
+      --accent-d: #ffcf5b;
+      --shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(126, 249, 255, 0.18), transparent 24%),
+        radial-gradient(circle at 88% 12%, rgba(168, 85, 247, 0.2), transparent 22%),
+        radial-gradient(circle at 80% 85%, rgba(255, 138, 91, 0.16), transparent 24%),
+        linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 38%, var(--bg-2) 72%, var(--bg-3) 100%);
+      /* make layers slightly larger so shifting looks smooth */
+      background-size: 120% 120%, 120% 120%, 120% 120%, 200% 200%;
+      /* subtle animated shift of the existing gradient layers (colors preserved) */
+      animation: bgShift 22s ease-in-out infinite alternate;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      border-radius: 999px;
+      filter: blur(50px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+      animation: drift 16s ease-in-out infinite alternate;
+    }
+
+    body::before {
+      width: 360px;
+      height: 360px;
+      top: -120px;
+      left: -120px;
+      background: radial-gradient(circle, rgba(126, 249, 255, 0.24), transparent 70%);
+    }
+
+    body::after {
+      width: 440px;
+      height: 440px;
+      right: -150px;
+      bottom: -160px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.24), transparent 70%);
+      animation-delay: -6s;
+    }
+
+    @keyframes drift {
+      from {
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+      to {
+        transform: translate3d(28px, 18px, 0) scale(1.1);
+      }
+    }
+
+    @keyframes bgShift {
+      from {
+        background-position: 12% 18%, 88% 12%, 80% 85%, 0% 0%;
+      }
+      to {
+        background-position: 6% 10%, 92% 20%, 75% 90%, 10% 10%;
+      }
+    }
+
+    /* (Removed skeleton loaders as requested) */
+
+    @keyframes floatSlow {
+      0% { transform: translateY(0px) translateX(0px); }
+      50% { transform: translateY(-16px) translateX(8px); }
+      100% { transform: translateY(0px) translateX(0px); }
+    }
+
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    #root {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 20px 1rem 52px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 16px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 16px 18px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: rgba(8, 12, 28, 0.72);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-b), var(--accent-c));
+      box-shadow: 0 14px 30px rgba(168, 85, 247, 0.28);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.38);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+      font-weight: 700;
+    }
+
+    .brand-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav button {
+      appearance: none;
+      border: 0;
+      padding: 11px 16px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 180ms ease;
+    }
+
+    .nav a.nav-link {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.04);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 180ms ease;
+      align-self: center;
+    }
+
+    .nav a.nav-link:hover { color: var(--text); transform: translateY(-1px); background: rgba(255,255,255,0.08); }
+
+    .nav button:hover {
+      color: var(--text);
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav button.active {
+      color: #07101e;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-d));
+      box-shadow: 0 12px 24px rgba(126, 249, 255, 0.18);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      box-shadow: var(--shadow);
+      padding: 40px 1rem; /* reduce side padding */
+      margin-bottom: 26px;
+      animation: slideInUp 0.7s ease both;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .hero-home {
+      display: grid;
+      grid-template-columns: 1fr; /* use full width for text */
+      gap: 28px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hero-home-content {
+      min-width: 0;
+      max-width: 100%;
+      width: 100%;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-home-visual {
+      min-height: 340px;
+      display: flex;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-home-panel {
+      flex: 1;
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background:
+        radial-gradient(circle at 20% 18%, rgba(126, 249, 255, 0.22), transparent 22%),
+        radial-gradient(circle at 78% 22%, rgba(168, 85, 247, 0.22), transparent 24%),
+        radial-gradient(circle at 50% 82%, rgba(255, 138, 91, 0.18), transparent 26%),
+        linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 20px 40px rgba(0, 0, 0, 0.22);
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+      align-content: center;
+      animation: floatSlow 10s ease-in-out infinite;
+    }
+
+    .hero-home-card {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(9, 14, 32, 0.62);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero-home-stat {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .hero-home-stat strong {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 1.15rem;
+    }
+
+    .hero-home-stat span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .hero-home-visual-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hero-home-mini {
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-home-mini .label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .hero-home-mini .value {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .hero-home-band {
+      border-radius: 22px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(126, 249, 255, 0.12), rgba(168, 85, 247, 0.14), rgba(255, 138, 91, 0.12));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .hero-home-band p {
+      margin: 0;
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      animation: floatSlow 10s ease-in-out infinite;
+    }
+
+    .hero::before {
+      width: 210px;
+      height: 210px;
+      background: radial-gradient(circle, rgba(126, 249, 255, 0.18), transparent 68%);
+      top: -50px;
+      right: -30px;
+    }
+
+    .hero::after {
+      width: 170px;
+      height: 170px;
+      background: radial-gradient(circle, rgba(255, 138, 91, 0.18), transparent 70%);
+      left: -20px;
+      bottom: -40px;
+      animation-delay: -4s;
+    }
+
+    .page-title {
+      margin: 0;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: clamp(2.5rem, 5vw, 4.6rem);
+      line-height: 0.98;
+      letter-spacing: -0.03em;
+      max-width: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #ffffff 0%, var(--accent-a) 30%, var(--accent-d) 65%, var(--accent-c) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 12s ease infinite;
+      background-size: 200% 200%;
+    }
+
+    /* Ensure all paragraph text inside hero and related sections use full width */
+    .hero-copy,
+    .hero-copy p,
+    .hero-home-content p,
+    .section-title p,
+    .section-title .eyebrow + p,
+    .hero p,
+    .container p,
+    .shell p {
+      max-width: none !important;
+      width: 100% !important;
+      padding-right: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    /* Ensure hero copy container expands fully */
+    .hero-copy {
+      width: 100% !important;
+      max-width: none !important;
+      padding-right: 0 !important;
+    }
+
+    /* If a hero grid exists, force single full-width column for text */
+    .hero-grid {
+      grid-template-columns: 1fr !important;
+      width: 100% !important;
+    }
+
+    .hero-copy {
+      margin-top: 18px;
+      color: #d8def6;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      max-width: none !important;
+      width: 100% !important;
+      padding-right: 0 !important;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+    }
+
+    .primary-btn {
+      color: #07101e;
+      background: linear-gradient(135deg, var(--accent-a), #d8ff9f, var(--accent-d));
+      box-shadow: 0 18px 30px rgba(126, 249, 255, 0.18);
+    }
+
+    .secondary-btn {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .primary-btn:hover,
+    .secondary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 34px rgba(0, 0, 0, 0.24);
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 26px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      animation: slideInUp 0.6s ease both;
+    }
+
+    .card h2,
+    .card h3 {
+      margin: 0;
+      font-family: "Space Grotesk", Inter, sans-serif;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent-a);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 118px;
+      justify-content: space-between;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-weight: 700;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .section-title h2 {
+      font-size: 1.4rem;
+    }
+
+    .section-title p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .chart-wrap {
+      width: 100%;
+      height: 320px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .step {
+      border-radius: 22px;
+      padding: 18px;
+      background: linear-gradient(165deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-height: 180px;
+    }
+
+    .step-number {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      color: #07101e;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-d));
+      margin-bottom: 16px;
+    }
+
+    .step h3 {
+      margin-bottom: 10px;
+      font-size: 1.05rem;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .predictor-layout {
+      display: grid;
+      grid-template-columns: 1.06fr 0.94fr;
+      gap: 18px;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .input-row input {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+      outline: none;
+      font-size: 1rem;
+    }
+
+    .input-row input:focus {
+      border-color: rgba(126, 249, 255, 0.6);
+      box-shadow: 0 0 0 4px rgba(126, 249, 255, 0.1);
+    }
+
+    .catalog-shell {
+      display: grid;
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .catalog-filter {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 160ms ease;
+    }
+
+    .chip.active {
+      color: #07101e;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-d));
+      border-color: transparent;
+    }
+
+    .movie-list {
+      display: grid;
+      gap: 12px;
+      max-height: 420px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .movie-list::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .movie-list::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(126, 249, 255, 0.6), rgba(168, 85, 247, 0.6));
+      border-radius: 999px;
+    }
+
+    .movie-option {
+      text-align: left;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .movie-option:hover {
+      transform: translateY(-1px);
+      border-color: rgba(126, 249, 255, 0.44);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .movie-option strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 1rem;
+    }
+
+    .movie-option span {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .selection-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .selected-card {
+      display: grid;
+      gap: 12px;
+      padding: 22px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(150deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    }
+
+    .selected-card h3 {
+      font-size: 1.45rem;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font-size: 0.88rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .score-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .score-box {
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .score-box strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .score-box span {
+      font-size: 1.25rem;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-weight: 700;
+    }
+
+    .charts-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .recommendations {
+      display: grid;
+      gap: 12px;
+    }
+
+    .recommendation {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .rank {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent-a), var(--accent-d));
+      color: #07101e;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .recommendation h4 {
+      margin: 0 0 4px;
+      font-size: 0.98rem;
+    }
+
+    .recommendation p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .rating {
+      display: grid;
+      justify-items: end;
+      gap: 5px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .rating strong {
+      font-size: 1.05rem;
+    }
+
+    .rating span {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    .loader {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      border-top-color: var(--accent-a);
+      animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty {
+      padding: 20px;
+      border-radius: 18px;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .footer-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1100px) {
+      .grid.cols-3,
+      .grid.cols-2,
+      .charts-grid,
+      .predictor-layout,
+      .pipeline,
+      .score-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .hero {
+        padding: 28px 22px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: 100%;
+        padding-top: 10px;
+      }
+
+      .hero {
+        border-radius: 26px;
+      }
+
+      .page-title {
+        max-width: none;
+      }
+
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+
+      .recommendation {
+        grid-template-columns: auto 1fr;
+      }
+
+      .rating {
+        grid-column: 1 / -1;
+        justify-items: start;
+        text-align: left;
+        margin-left: 50px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useEffect, useMemo, useState } = React;
+
+    // Helper: read query param
+    const getQueryParam = (name) => {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    };
+
+    const BOLLYWOOD_PICKS = [
+      'Dilwale Dulhania Le Jayenge (1995)',
+      '3 Idiots (2009)',
+      'Lagaan: Once Upon a Time in India (2001)',
+      'Sholay (1975)',
+      'Chak De! India (2007)',
+      'Queen (2013)',
+      'Gully Boy (2019)',
+      'PK (2014)',
+    ];
+
+    const HOLLYWOOD_PICKS = [
+      'Toy Story (1995)',
+      'The Matrix (1999)',
+      'Forrest Gump (1994)',
+      'Inception (2010)',
+      'The Dark Knight (2008)',
+      'Titanic (1997)',
+      'The Shawshank Redemption (1994)',
+      'Interstellar (2014)',
+    ];
+
+    const NAV_ITEMS = [
+      { id: 'home', label: 'Home' },
+      { id: 'how', label: 'How It Works' },
+      { id: 'predictor', label: 'Predictor' },
+    ];
+
+    const GENRE_COLORS = ['#7ef9ff', '#a855f7', '#ff8a5b', '#ffcf5b', '#88f7a2', '#70c1ff'];
+
+    const HOLLYWOOD_TITLES = new Set([
+      'Toy Story (1995)',
+      'The Matrix (1999)',
+      'Forrest Gump (1994)',
+      'Inception (2010)',
+      'The Dark Knight (2008)',
+      'Titanic (1997)',
+      'The Shawshank Redemption (1994)',
+      'Interstellar (2014)',
+      'Fight Club (1999)',
+      'Pulp Fiction (1994)',
+      'The Godfather (1972)',
+      'The Godfather: Part II (1974)',
+      'Se7en (1995)',
+    ]);
+
+    const MOVIE_PROFILES = {
+      'Dilwale Dulhania Le Jayenge (1995)': { year: 1995, genres: ['Comedy', 'Drama', 'Romance'], category: 'Bollywood' },
+      '3 Idiots (2009)': { year: 2009, genres: ['Comedy', 'Drama'], category: 'Bollywood' },
+      'Lagaan: Once Upon a Time in India (2001)': { year: 2001, genres: ['Adventure', 'Drama'], category: 'Bollywood' },
+      'Sholay (1975)': { year: 1975, genres: ['Action', 'Adventure', 'Drama'], category: 'Bollywood' },
+      'Chak De! India (2007)': { year: 2007, genres: ['Drama'], category: 'Bollywood' },
+      'Queen (2013)': { year: 2013, genres: ['Comedy', 'Drama'], category: 'Bollywood' },
+      'Gully Boy (2019)': { year: 2019, genres: ['Drama'], category: 'Bollywood' },
+      'PK (2014)': { year: 2014, genres: ['Comedy', 'Drama', 'Fantasy'], category: 'Bollywood' },
+      'Toy Story (1995)': { year: 1995, genres: ['Adventure', 'Animation', 'Children', 'Comedy', 'Fantasy'], category: 'Hollywood' },
+      'The Matrix (1999)': { year: 1999, genres: ['Action', 'Sci-Fi'], category: 'Hollywood' },
+      'Forrest Gump (1994)': { year: 1994, genres: ['Comedy', 'Drama', 'Romance'], category: 'Hollywood' },
+      'Inception (2010)': { year: 2010, genres: ['Action', 'Adventure', 'Sci-Fi'], category: 'Hollywood' },
+      'The Dark Knight (2008)': { year: 2008, genres: ['Action', 'Crime', 'Drama'], category: 'Hollywood' },
+      'Titanic (1997)': { year: 1997, genres: ['Drama', 'Romance'], category: 'Hollywood' },
+      'The Shawshank Redemption (1994)': { year: 1994, genres: ['Crime', 'Drama'], category: 'Hollywood' },
+      'Interstellar (2014)': { year: 2014, genres: ['Adventure', 'Drama', 'Sci-Fi'], category: 'Hollywood' },
+    };
+
+    const normalize = (value) =>
+      String(value || '')
+        .toLowerCase()
+        .replace(/\s*\(\d{4}\)\s*$/, '')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const labelGenres = (genres) => {
+      if (!genres || !genres.length) return 'Genre unknown';
+      return genres.join(' • ');
+    };
+
+    const fetchJson = async (url) => {
+      const response = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || `Request failed: ${response.status}`);
+      }
+      return response.json();
+    };
+
+    const inferCategory = (title) => (HOLLYWOOD_TITLES.has(title) ? 'Hollywood' : 'Bollywood');
+
+    const getMovieProfile = (title) => MOVIE_PROFILES[title] || { year: null, genres: [], category: inferCategory(title) };
+
+    const chartColors = ['#7ef9ff', '#a855f7', '#ff8a5b', '#ffcf5b', '#88f7a2', '#70c1ff'];
+
+    const polarToCartesian = (cx, cy, radius, angle) => {
+      const radians = ((angle - 90) * Math.PI) / 180;
+      return {
+        x: cx + radius * Math.cos(radians),
+        y: cy + radius * Math.sin(radians),
+      };
+    };
+
+    const describeArc = (cx, cy, innerRadius, outerRadius, startAngle, endAngle) => {
+      const outerStart = polarToCartesian(cx, cy, outerRadius, endAngle);
+      const outerEnd = polarToCartesian(cx, cy, outerRadius, startAngle);
+      const innerStart = polarToCartesian(cx, cy, innerRadius, startAngle);
+      const innerEnd = polarToCartesian(cx, cy, innerRadius, endAngle);
+      const largeArc = endAngle - startAngle <= 180 ? '0' : '1';
+
+      return [
+        'M', outerStart.x, outerStart.y,
+        'A', outerRadius, outerRadius, 0, largeArc, 0, outerEnd.x, outerEnd.y,
+        'L', innerStart.x, innerStart.y,
+        'A', innerRadius, innerRadius, 0, largeArc, 1, innerEnd.x, innerEnd.y,
+        'Z',
+      ].join(' ');
+    };
+
+    function ChartPanel({ title, subtitle, children, height = 320 }) {
+      return (
+        <div className="card">
+          <div className="section-title">
+            <div>
+              <p className="eyebrow">{title}</p>
+              <h2>{subtitle}</h2>
+            </div>
+          </div>
+          <div className="chart-wrap" style={{ height }}>
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    function SimpleBarChart({ data }) {
+      const width = 1000;
+      const height = 320;
+      const padding = { top: 20, right: 20, bottom: 56, left: 44 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      const maxValue = Math.max(...data.map((item) => item.value), 1);
+      const barWidth = chartWidth / Math.max(data.length, 1) * 0.68;
+      const gap = chartWidth / Math.max(data.length, 1) * 0.32;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" role="img" aria-label="Bar chart">
+          {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+            const y = padding.top + chartHeight - chartHeight * tick;
+            return <line key={tick} x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeDasharray="3 4" />;
+          })}
+          {data.map((item, index) => {
+            const x = padding.left + index * (barWidth + gap) + gap / 2;
+            const barHeight = (item.value / maxValue) * chartHeight;
+            const y = padding.top + chartHeight - barHeight;
+            const color = chartColors[index % chartColors.length];
+            return (
+              <g key={item.name}>
+                <rect x={x} y={y} width={barWidth} height={barHeight} rx="14" fill={`url(#barGradient${index % 2})`} />
+                <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fill="#eef3ff" fontSize="12" fontWeight="700">
+                  {item.value}
+                </text>
+                <text x={x + barWidth / 2} y={height - 24} textAnchor="middle" fill="#cdd4ef" fontSize="11">
+                  {item.name.length > 10 ? `${item.name.slice(0, 10)}…` : item.name}
+                </text>
+              </g>
+            );
+          })}
+          <defs>
+            <linearGradient id="barGradient0" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#7ef9ff" />
+              <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+            <linearGradient id="barGradient1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#ff8a5b" />
+              <stop offset="100%" stopColor="#ffcf5b" />
+            </linearGradient>
+          </defs>
+        </svg>
+      );
+    }
+
+    function SimpleAreaChart({ data, valueKey = 'similarity', stroke = '#7ef9ff', fill = 'rgba(126,249,255,0.22)' }) {
+      const width = 1000;
+      const height = 280;
+      const padding = { top: 20, right: 20, bottom: 38, left: 44 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      const values = data.map((item) => Number(item[valueKey] ?? 0));
+      const maxValue = Math.max(...values, 1);
+      const points = values.map((value, index) => {
+        const x = padding.left + (chartWidth / Math.max(values.length - 1, 1)) * index;
+        const y = padding.top + chartHeight - (value / maxValue) * chartHeight;
+        return { x, y, value };
+      });
+
+      const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+      const areaPath = points.length
+        ? `${linePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`
+        : '';
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" role="img" aria-label="Area chart">
+          {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+            const y = padding.top + chartHeight - chartHeight * tick;
+            return <line key={tick} x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeDasharray="3 4" />;
+          })}
+          {areaPath ? <path d={areaPath} fill={fill} /> : null}
+          {linePath ? <path d={linePath} fill="none" stroke={stroke} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" /> : null}
+          {points.map((point, index) => (
+            <g key={index}>
+              <circle cx={point.x} cy={point.y} r="5" fill={stroke} />
+              <text x={point.x} y={height - 16} textAnchor="middle" fill="#cdd4ef" fontSize="11">
+                {data[index].rank}
+              </text>
+            </g>
+          ))}
+        </svg>
+      );
+    }
+
+    function SimpleLineChart({ data, valueKey = 'rating', stroke = '#ffcf5b' }) {
+      const width = 1000;
+      const height = 280;
+      const padding = { top: 20, right: 20, bottom: 38, left: 44 };
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      const values = data.map((item) => Number(item[valueKey] ?? 0));
+      const maxValue = Math.max(...values, 1);
+      const points = values.map((value, index) => {
+        const x = padding.left + (chartWidth / Math.max(values.length - 1, 1)) * index;
+        const y = padding.top + chartHeight - (value / maxValue) * chartHeight;
+        return { x, y };
+      });
+
+      const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" role="img" aria-label="Line chart">
+          {[0, 0.25, 0.5, 0.75, 1].map((tick) => {
+            const y = padding.top + chartHeight - chartHeight * tick;
+            return <line key={tick} x1={padding.left} x2={width - padding.right} y1={y} y2={y} stroke="rgba(255,255,255,0.08)" strokeDasharray="3 4" />;
+          })}
+          {linePath ? <path d={linePath} fill="none" stroke={stroke} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" /> : null}
+          {points.map((point, index) => (
+            <g key={index}>
+              <circle cx={point.x} cy={point.y} r="5" fill={stroke} />
+              <text x={point.x} y={height - 16} textAnchor="middle" fill="#cdd4ef" fontSize="11">
+                {data[index].rank}
+              </text>
+            </g>
+          ))}
+        </svg>
+      );
+    }
+
+    function SimplePieChart({ data }) {
+      const width = 340;
+      const height = 260;
+      const cx = 150;
+      const cy = 126;
+      const innerRadius = 52;
+      const outerRadius = 92;
+      const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0) || 1;
+      let cursor = 0;
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" role="img" aria-label="Pie chart">
+          {data.map((item, index) => {
+            const angle = (Number(item.value || 0) / total) * 360;
+            const path = describeArc(cx, cy, innerRadius, outerRadius, cursor, cursor + angle);
+            const segment = (
+              <path key={item.name} d={path} fill={item.color || chartColors[index % chartColors.length]} />
+            );
+            cursor += angle;
+            return segment;
+          })}
+          <circle cx={cx} cy={cy} r={42} fill="rgba(10,15,32,0.88)" stroke="rgba(255,255,255,0.1)" />
+          <text x={cx} y={cy - 4} textAnchor="middle" fill="#f5f7ff" fontSize="12" fontWeight="700">
+            Genres
+          </text>
+          <text x={cx} y={cy + 14} textAnchor="middle" fill="#cdd4ef" fontSize="10">
+            selected movie
+          </text>
+          <g transform="translate(255 36)">
+            {data.map((item, index) => (
+              <g key={item.name} transform={`translate(0 ${index * 30})`}>
+                <rect width="12" height="12" rx="4" fill={item.color || chartColors[index % chartColors.length]} />
+                <text x="18" y="11" fill="#eef3ff" fontSize="11">
+                  {item.name}
+                </text>
+              </g>
+            ))}
+          </g>
+        </svg>
+      );
+    }
+
+    function SimpleRadarChart({ data }) {
+      const width = 340;
+      const height = 260;
+      const cx = 150;
+      const cy = 120;
+      const radius = 80;
+      const points = data.map((item, index) => {
+        const angle = (360 / data.length) * index;
+        const point = polarToCartesian(cx, cy, (radius * Number(item.value)) / 100, angle);
+        return { ...point, metric: item.metric, angle };
+      });
+      const polygonPoints = points.map((point) => `${point.x},${point.y}`).join(' ');
+      const gridLevels = [20, 40, 60, 80, 100];
+
+      return (
+        <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="100%" role="img" aria-label="Radar chart">
+          {gridLevels.map((level) => {
+            const gridPoints = data.map((item, index) => {
+              const angle = (360 / data.length) * index;
+              return polarToCartesian(cx, cy, (radius * level) / 100, angle);
+            });
+            return <polygon key={level} points={gridPoints.map((point) => `${point.x},${point.y}`).join(' ')} fill="none" stroke="rgba(255,255,255,0.08)" />;
+          })}
+          {data.map((item, index) => {
+            const angle = (360 / data.length) * index;
+            const end = polarToCartesian(cx, cy, radius, angle);
+            return <line key={item.metric} x1={cx} y1={cy} x2={end.x} y2={end.y} stroke="rgba(255,255,255,0.08)" />;
+          })}
+          <polygon points={polygonPoints} fill="rgba(168,85,247,0.24)" stroke="#7ef9ff" strokeWidth="3" />
+          {points.map((point) => (
+            <g key={point.metric}>
+              <circle cx={point.x} cy={point.y} r="4.5" fill="#ffcf5b" />
+              <text
+                x={polarToCartesian(cx, cy, radius + 20, point.angle).x}
+                y={polarToCartesian(cx, cy, radius + 20, point.angle).y}
+                textAnchor="middle"
+                fill="#cdd4ef"
+                fontSize="11"
+              >
+                {point.metric}
+              </text>
+            </g>
+          ))}
+        </svg>
+      );
+    }
+
+    function App() {
+      const [page, setPage] = useState('home');
+      const [stats, setStats] = useState(null);
+      const [statsError, setStatsError] = useState('');
+      const [selectedTitle, setSelectedTitle] = useState('Dilwale Dulhania Le Jayenge (1995)');
+      const [catalog, setCatalog] = useState([]);
+      const [catalogLoading, setCatalogLoading] = useState(false);
+      const [catalogProgress, setCatalogProgress] = useState('');
+      const [catalogError, setCatalogError] = useState('');
+      const [recommendations, setRecommendations] = useState([]);
+      const [predictorLoading, setPredictorLoading] = useState(false);
+      const [predictorError, setPredictorError] = useState('');
+      const [favorites, setFavorites] = useState([]);
+      const [globalInitializing, setGlobalInitializing] = useState(false);
+      const [query, setQuery] = useState('');
+      const [activeLane, setActiveLane] = useState('all');
+
+      useEffect(() => {
+        let mounted = true;
+        fetchJson('/api/stats')
+          .then((data) => {
+            if (mounted) setStats(data);
+          })
+          .catch((error) => {
+            if (mounted) setStatsError(error.message || 'Unable to load stats');
+          });
+        return () => {
+          mounted = false;
+        };
+      }, []);
+
+      useEffect(() => {
+        if (page !== 'predictor' || catalogLoading || catalog.length) return;
+
+        let cancelled = false;
+        const loadCatalog = async () => {
+          setCatalogLoading(true);
+          setCatalogProgress('Loading catalog...');
+          setCatalogError('');
+          try {
+            const pageSize = 500;
+            const maxMovies = 1000;
+            let offset = 0;
+            const allMovies = [];
+
+            while (allMovies.length < maxMovies) {
+              setCatalogProgress(`Loading movies ${allMovies.length + 1}+`);
+              const batch = await fetchJson(`/api/movies?limit=${pageSize}&offset=${offset}`);
+              allMovies.push(...batch);
+              if (batch.length < pageSize || allMovies.length >= maxMovies) break;
+              offset += pageSize;
+            }
+
+            if (!cancelled) {
+              setCatalog(allMovies.slice(0, maxMovies));
+              setCatalogProgress(`Loaded ${Math.min(allMovies.length, maxMovies)} movies`);
+            }
+          } catch (error) {
+            if (!cancelled) {
+              setCatalogError(error.message || 'Unable to load catalog');
+              setCatalogProgress('');
+            }
+          } finally {
+            if (!cancelled) setCatalogLoading(false);
+          }
+        };
+
+        loadCatalog();
+        return () => {
+          cancelled = true;
+        };
+      }, [page, catalogLoading, catalog.length]);
+
+      // Load favorites on mount
+      useEffect(() => {
+        let mounted = true;
+        const loadFavs = async () => {
+          try {
+            const res = await fetch('/api/favorites');
+            if (!res.ok) return;
+            const data = await res.json();
+            if (mounted) setFavorites(Array.isArray(data) ? data : []);
+          } catch (e) {
+            // ignore
+          }
+        };
+        loadFavs();
+        return () => { mounted = false; };
+      }, []);
+
+      // Check backend initialization status
+      useEffect(() => {
+        let mounted = true;
+        const checkHealth = async () => {
+          try {
+            const r = await fetch('/api/health');
+            if (!r.ok) return;
+            const j = await r.json();
+            if (mounted) setGlobalInitializing(j.status !== 'healthy');
+          } catch (e) {
+            if (mounted) setGlobalInitializing(true);
+          }
+        };
+        checkHealth();
+        const id = setInterval(checkHealth, 3000);
+        return () => { mounted = false; clearInterval(id); };
+      }, []);
+
+      useEffect(() => {
+        if (!selectedTitle) return;
+
+        let cancelled = false;
+        setPredictorLoading(true);
+        setPredictorError('');
+
+        fetchJson(`/api/recommend?title=${encodeURIComponent(selectedTitle)}&limit=8`)
+          .then((data) => {
+            if (!cancelled) {
+              const backendRecs = Array.isArray(data.recommendations) ? data.recommendations : data || [];
+              // Append Bollywood picks (avoid duplicates)
+              const existingTitles = new Set(backendRecs.map((r) => (r.title || '').toLowerCase()));
+              const bollyRecs = BOLLYWOOD_PICKS
+                .filter((t) => !existingTitles.has(t.toLowerCase()))
+                .map((t) => {
+                  const profile = MOVIE_PROFILES[t] || {};
+                  return {
+                    movieId: null,
+                    title: t,
+                    genres: profile.genres || [],
+                    releaseYear: profile.year || null,
+                    similarityScore: 0,
+                    avgRating: 0,
+                    ratingCount: 0,
+                  };
+                });
+
+              setRecommendations([...backendRecs, ...bollyRecs]);
+            }
+          })
+          .catch((error) => {
+            if (!cancelled) {
+              setPredictorError(error.message || 'Unable to fetch recommendations');
+              setRecommendations([]);
+            }
+          })
+          .finally(() => {
+            if (!cancelled) setPredictorLoading(false);
+          });
+
+        return () => {
+          cancelled = true;
+        };
+      }, [selectedTitle]);
+
+      // Read shareable ?title= on load
+      useEffect(() => {
+        const q = getQueryParam('title');
+        if (q) {
+          setSelectedTitle(q);
+          setPage('predictor');
+        }
+      }, []);
+
+      const statsCards = useMemo(() => {
+        if (!stats) return [];
+        const genres = stats.topGenres || {};
+        return [
+          { label: 'Movies', value: Number(stats.totalMovies || 0).toLocaleString() },
+          { label: 'Ratings', value: Number(stats.totalRatings || 0).toLocaleString() },
+          { label: 'Users', value: Number(stats.totalUsers || 0).toLocaleString() },
+          { label: 'Average rating', value: Number(stats.avgRating || 0).toFixed(1) },
+        ];
+      }, [stats]);
+
+      const topGenres = useMemo(() => {
+        if (!stats || !stats.topGenres) return [];
+        return Object.entries(stats.topGenres)
+          .filter(([name]) => name && name !== '(no genres listed)')
+          .slice(0, 8)
+          .map(([name, value]) => ({ name, value: Number(value) }));
+      }, [stats]);
+
+      const selectedMovie = useMemo(() => {
+        return catalog.find((movie) => movie.title === selectedTitle) || null;
+      }, [catalog, selectedTitle]);
+
+      const selectedProfile = getMovieProfile(selectedTitle);
+
+      const genrePieData = useMemo(() => {
+        const genres = selectedMovie && Array.isArray(selectedMovie.genres)
+          ? selectedMovie.genres
+          : selectedProfile.genres;
+        return genres.length
+          ? genres.map((genre, index) => ({ name: genre, value: 1, color: chartColors[index % chartColors.length] }))
+          : [{ name: 'No data', value: 1, color: '#44506f' }];
+      }, [selectedMovie, selectedProfile]);
+
+      const recommendationTrend = useMemo(() => {
+        return recommendations.map((item, index) => ({
+          rank: index + 1,
+          similarity: Number((item.similarityScore ?? item.similarity ?? 0) * 100).toFixed(1),
+          rating: Number(item.avgRating ?? 0).toFixed(1),
+        }));
+      }, [recommendations]);
+
+      const recommendationBars = useMemo(() => {
+        return recommendations.map((item, index) => ({
+          rank: String(index + 1),
+          similarity: Number((item.similarityScore ?? item.similarity ?? 0) * 100),
+        }));
+      }, [recommendations]);
+
+      const radarData = [
+        { metric: 'Data', value: 95 },
+        { metric: 'Training', value: 92 },
+        { metric: 'Search', value: 90 },
+        { metric: 'Prediction', value: 94 },
+        { metric: 'Visualization', value: 88 },
+      ];
+
+      const filteredCatalog = useMemo(() => {
+        const term = normalize(query);
+        return catalog.filter((movie) => {
+          const title = normalize(movie.title);
+          const genres = Array.isArray(movie.genres) ? movie.genres.join(' ').toLowerCase() : '';
+          const category = inferCategory(movie.title).toLowerCase();
+          const laneMatch = activeLane === 'all' || category === activeLane;
+          const termMatch = !term || title.includes(term) || genres.includes(term);
+          return laneMatch && termMatch;
+        }).slice(0, 48);
+      }, [catalog, query, activeLane]);
+
+      const selectMovie = (title) => {
+        setSelectedTitle(title);
+        setPage('predictor');
+        // update shareable URL
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set('title', title);
+          window.history.replaceState({}, '', url.toString());
+        } catch (e) { }
+      };
+
+      const toggleFavorite = async (movieId) => {
+        try {
+          const has = favorites.includes(movieId);
+          const method = has ? 'DELETE' : 'POST';
+          const res = await fetch('/api/favorites', {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ movieId }),
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          setFavorites(Array.isArray(data) ? data : []);
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      const copyShareLink = (title) => {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set('title', title);
+          navigator.clipboard.writeText(url.toString());
+        } catch (e) { }
+      };
+
+      const renderHome = () => (
+        <>
+          <section className="hero hero-home">
+            <div className="hero-home-content">
+              <p className="eyebrow">Movie recommender</p>
+              <h1 className="page-title">Discover movies with a cinematic interface</h1>
+              <p className="hero-copy">
+                CineMatch blends a movie recommender backend with a React interface, animated gradients,
+                and data visualizations. It can search across both Bollywood and Hollywood titles, explain
+                the recommendation flow, and show similarity-based predictions in a single interactive experience.
+              </p>
+              <div className="hero-actions">
+                <button className="primary-btn" onClick={() => setPage('predictor')}>Open Predictor</button>
+                <button className="secondary-btn" onClick={() => setPage('how')}>See How It Works</button>
+              </div>
+            </div>
+            <div className="hero-home-visual" aria-hidden="true">
+              <div className="hero-home-panel">
+                <div className="hero-home-card hero-home-stat">
+                  <div>
+                    <span className="label">Bollywood + Hollywood</span>
+                    <strong>Unified catalog</strong>
+                  </div>
+                  <span>Two markets, one recommender</span>
+                </div>
+                <div className="hero-home-visual-grid">
+                  <div className="hero-home-mini">
+                    <span className="label">Model</span>
+                    <div className="value">TF-IDF</div>
+                  </div>
+                  <div className="hero-home-mini">
+                    <span className="label">Similarity</span>
+                    <div className="value">Cosine</div>
+                  </div>
+                  <div className="hero-home-mini">
+                    <span className="label">UX</span>
+                    <div className="value">React</div>
+                  </div>
+                  <div className="hero-home-mini">
+                    <span className="label">Visuals</span>
+                    <div className="value">Charts</div>
+                  </div>
+                </div>
+                <div className="hero-home-band">
+                  <p>
+                    Use the predictor tab to explore Bollywood and Hollywood movies with recommendation ranks,
+                    dataset ratings, and visual summaries.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid cols-3" aria-label="project metrics">
+            {statsCards.map((item) => (
+              <article className="card stat" key={item.label}>
+                <div>
+                  <p className="eyebrow">Project metric</p>
+                  <div className="stat-value">{item.value}</div>
+                </div>
+                <div className="stat-label">{item.label}</div>
+              </article>
+            ))}
+          </section>
+
+          <section className="card" style={{ marginTop: '18px' }}>
+            <div className="section-title">
+              <div>
+                <p className="eyebrow">Catalog shape</p>
+                <h2>Top genres in the trained dataset</h2>
+              </div>
+              <p>Based on the backend statistics endpoint</p>
+            </div>
+            <div className="chart-wrap">
+              {topGenres.length ? <SimpleBarChart data={topGenres} /> : statsError ? <div className="empty">{statsError}</div> : <div className="empty">Loading statistics...</div>}
+            </div>
+          </section>
+        </>
+      );
+
+      const renderHowItWorks = () => (
+        <>
+          <section className="hero">
+            <p className="eyebrow">How the system works</p>
+            <h1 className="page-title">A simple pipeline with a strong visual story</h1>
+            <p className="hero-copy">
+              The backend loads MovieLens metadata, builds TF-IDF vectors from titles, genres, and tags,
+              and compares movie similarity with cosine distance. The React frontend makes the pipeline
+              readable through structure, charts, and step-based explanations.
+            </p>
+          </section>
+
+          <section className="pipeline" aria-label="workflow steps">
+            {[
+              {
+                number: '01',
+                title: 'Ingest and clean the data',
+                body: 'Movie titles, genres, ratings, and tags are normalized so the recommender can compare like with like.',
+              },
+              {
+                number: '02',
+                title: 'Train the similarity model',
+                body: 'The backend creates TF-IDF vectors for every title and measures how close each film is to the selected one.',
+              },
+              {
+                number: '03',
+                title: 'Explain the match visually',
+                body: 'The predictor page shows ranked recommendations, ratings, and charted similarity scores for each result.',
+              },
+              {
+                number: '04',
+                title: 'Browse across markets',
+                body: 'The catalog includes Bollywood and Hollywood titles, so the same recommender can serve both audiences.',
+              },
+            ].map((step) => (
+              <article className="step" key={step.number}>
+                <div className="step-number">{step.number}</div>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </article>
+            ))}
+          </section>
+
+          <section className="grid cols-2" style={{ marginTop: '18px' }}>
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">System view</p>
+                  <h2>Pipeline balance</h2>
+                </div>
+                <p>Training, search, and presentation</p>
+              </div>
+              <div className="chart-wrap">
+                <SimpleRadarChart data={radarData} />
+              </div>
+            </article>
+
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">What the user sees</p>
+                  <h2>Experience goals</h2>
+                </div>
+              </div>
+              <div className="grid" style={{ gap: '14px' }}>
+                {[
+                  'A landing page that introduces the project clearly.',
+                  'A menu-driven explanation page that makes the algorithm legible.',
+                  'A predictor page that accepts Bollywood and Hollywood titles.',
+                  'Charts that make the recommendation output easier to scan.',
+                ].map((item) => (
+                  <div className="card" style={{ padding: '16px', background: 'var(--surface-soft)' }} key={item}>
+                    <strong>{item}</strong>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </section>
+        </>
+      );
+
+      const renderPredictor = () => (
+        <>
+          <section className="hero">
+            <p className="eyebrow">Predictor</p>
+            <h1 className="page-title">Select a movie and see the ranked prediction results</h1>
+            <p className="hero-copy">
+              Choose a Bollywood or Hollywood title, then view similarity-ranked recommendations with
+              rating information and visual breakdowns. The rating field is shown as the dataset average,
+              which is the closest available audience score in this project.
+            </p>
+          </section>
+
+          <section className="predictor-layout">
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Catalog search</p>
+                  <h2>Find a title</h2>
+                </div>
+                <p>{catalogLoading ? catalogProgress : `${catalog.length.toLocaleString()} movies loaded`}</p>
+              </div>
+
+              <div className="input-row">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search the catalog by title or genre"
+                />
+                <button className="primary-btn" onClick={() => selectMovie(query || selectedTitle)}>
+                  Predict
+                </button>
+              </div>
+
+              <div className="catalog-filter">
+                {[
+                  { id: 'all', label: 'All' },
+                  { id: 'bollywood', label: 'Bollywood' },
+                  { id: 'hollywood', label: 'Hollywood' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    className={`chip ${activeLane === item.id ? 'active' : ''}`}
+                    onClick={() => setActiveLane(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="catalog-shell">
+                <div className="movie-list">
+                  {filteredCatalog.length ? filteredCatalog.map((movie) => {
+                    const category = inferCategory(movie.title);
+                    return (
+                      <button
+                        className="movie-option"
+                        key={movie.movieId}
+                        onClick={() => selectMovie(movie.title)}
+                      >
+                        <strong>{movie.title}</strong>
+                        <span>
+                          {category} • {labelGenres(movie.genres)}
+                        </span>
+                      </button>
+                    );
+                  }) : (
+                    <div className="empty">
+                      {catalogLoading
+                        ? 'Loading the catalog in the background. Quick picks below are already available.'
+                        : catalogError || 'No matching movies found yet.'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid cols-2" style={{ marginTop: '18px' }}>
+                <div className="card" style={{ padding: '16px' }}>
+                  <p className="eyebrow">Bollywood picks</p>
+                  <div className="grid" style={{ gap: '10px' }}>
+                    {BOLLYWOOD_PICKS.map((title) => (
+                      <button key={title} className="secondary-btn" onClick={() => selectMovie(title)}>
+                        {title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="card" style={{ padding: '16px' }}>
+                  <p className="eyebrow">Hollywood picks</p>
+                  <div className="grid" style={{ gap: '10px' }}>
+                    {HOLLYWOOD_PICKS.map((title) => (
+                      <button key={title} className="secondary-btn" onClick={() => selectMovie(title)}>
+                        {title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article className="selection-panel">
+              <div className="selected-card">
+                <p className="eyebrow">Selected title</p>
+                <h3>{selectedTitle}</h3>
+                <div className="tag-row">
+                  <span className="tag">{selectedMovie ? inferCategory(selectedMovie.title) : selectedProfile.category}</span>
+                  <span className="tag">{selectedMovie ? String(selectedMovie.releaseYear || 'Year unknown') : String(selectedProfile.year || 'Year unknown')}</span>
+                  <span className="tag">{selectedMovie ? labelGenres(selectedMovie.genres) : labelGenres(selectedProfile.genres)}</span>
+                </div>
+                <div className="score-grid">
+                  <div className="score-box">
+                    <strong>IMDb rating</strong>
+                    <span>{selectedMovie ? Number(selectedMovie.avgRating || 0).toFixed(1) : '—'}</span>
+                  </div>
+                  <div className="score-box">
+                    <strong>Votes</strong>
+                    <span>{selectedMovie ? Number(selectedMovie.ratingCount || 0).toLocaleString() : '—'}</span>
+                  </div>
+                  <div className="score-box">
+                    <strong>Category</strong>
+                    <span>{selectedMovie ? inferCategory(selectedMovie.title) : inferCategory(selectedTitle)}</span>
+                  </div>
+                </div>
+                <p className="footer-note">
+                  The rating shown here is the dataset average used by the backend to approximate audience reception.
+                </p>
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button className="primary-btn" onClick={() => copyShareLink(selectedTitle)}>Copy share link</button>
+                  {selectedMovie && selectedMovie.movieId ? (
+                    <button className="secondary-btn" onClick={() => toggleFavorite(Number(selectedMovie.movieId))}>
+                      {favorites.includes(Number(selectedMovie.movieId)) ? 'Remove favorite' : 'Save favorite'}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="charts-grid">
+                <article className="card">
+                  <div className="section-title">
+                    <div>
+                      <p className="eyebrow">Similarity</p>
+                      <h2>Ranked prediction curve</h2>
+                    </div>
+                  </div>
+                  <div className="chart-wrap" style={{ height: '260px' }}>
+                    <SimpleAreaChart data={recommendationTrend} />
+                  </div>
+                </article>
+
+                <article className="card">
+                  <div className="section-title">
+                    <div>
+                      <p className="eyebrow">Genres</p>
+                      <h2>Selected movie mix</h2>
+                    </div>
+                  </div>
+                  <div className="chart-wrap" style={{ height: '260px' }}>
+                    <SimplePieChart data={genrePieData} />
+                  </div>
+                </article>
+              </div>
+            </article>
+          </section>
+
+          <section className="card" style={{ marginTop: '18px' }}>
+            <div className="section-title">
+              <div>
+                <p className="eyebrow">Recommendations</p>
+                <h2>Top matches returned by the model</h2>
+              </div>
+              <p>{predictorLoading ? 'Fetching results' : `${recommendations.length} results`}</p>
+            </div>
+
+            {predictorError ? <div className="empty">{predictorError}</div> : null}
+
+            <div className="recommendations" style={{ marginTop: '14px' }}>
+              {predictorLoading ? (
+                <div className="status"><span className="loader"></span>Loading recommendations...</div>
+              ) : recommendations.length ? recommendations.map((movie, index) => {
+                const genres = Array.isArray(movie.genres) ? movie.genres : [];
+                const rating = Number(movie.avgRating ?? movie.avg_rating ?? 0).toFixed(1);
+                const score = Number((movie.similarityScore ?? movie.similarity ?? 0) * 100).toFixed(1);
+                return (
+                  <div className="recommendation" key={`${movie.movieId || movie.title}-${index}`}>
+                    <div className="rank">{index + 1}</div>
+                    <div>
+                      <h4>{movie.title}</h4>
+                      <p>{labelGenres(genres)}</p>
+                    </div>
+                    <div className="rating">
+                      <strong>{rating}</strong>
+                      <span>IMDb rating</span>
+                      <span>{score}% match</span>
+                      <div style={{ marginTop: 8 }}>
+                        <button className="secondary-btn" onClick={() => selectMovie(movie.title)}>Open</button>
+                        {movie.movieId ? (
+                          <button className="secondary-btn" style={{ marginLeft: 8 }} onClick={() => toggleFavorite(Number(movie.movieId))}>
+                            {favorites.includes(Number(movie.movieId)) ? '★ Favorited' : '☆ Save'}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div className="empty">Select a movie to see ranked recommendations.</div>
+              )}
+            </div>
+
+            <div className="grid cols-2" style={{ marginTop: '18px' }}>
+              <article className="card">
+                <div className="section-title">
+                  <div>
+                    <p className="eyebrow">Similarity bars</p>
+                    <h2>Match strength by rank</h2>
+                  </div>
+                </div>
+                <div className="chart-wrap" style={{ height: '280px' }}>
+                  <SimpleBarChart data={recommendationBars.map((item) => ({ name: item.rank, value: item.similarity }))} />
+                </div>
+              </article>
+
+              <article className="card">
+                <div className="section-title">
+                  <div>
+                    <p className="eyebrow">Rating curve</p>
+                    <h2>Average ratings alongside prediction rank</h2>
+                  </div>
+                </div>
+                <div className="chart-wrap" style={{ height: '280px' }}>
+                  <SimpleLineChart data={recommendationTrend} />
+                </div>
+              </article>
+            </div>
+          </section>
+        </>
+      );
+
+      return (
+        <div className="shell">
+          {/* Global initializing banner */}
+          {globalInitializing ? (
+            <div style={{ position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 50 }}>
+              <div style={{ padding: '8px 14px', background: 'rgba(0,0,0,0.6)', borderRadius: 12, color: '#fff' }}>Backend initializing — recommendations may take a moment</div>
+            </div>
+          ) : null}
+
+          
+          <header className="topbar">
+            <div className="brand">
+              <div className="brand-mark"></div>
+              <div className="brand-copy">
+                <h1 className="brand-title">CineMatch</h1>
+                <p className="brand-subtitle">Movie recommender</p>
+              </div>
+            </div>
+            <nav className="nav" aria-label="Primary">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.id}
+                  className={page === item.id ? 'active' : ''}
+                  onClick={() => setPage(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </header>
+
+          {page === 'home' ? renderHome() : null}
+          {page === 'how' ? renderHowItWorks() : null}
+          {page === 'predictor' ? renderPredictor() : null}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

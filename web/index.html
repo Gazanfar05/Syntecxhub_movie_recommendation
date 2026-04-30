@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMatch - Movie Recommendations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-0: #070B18;
+            --bg-1: #0D1430;
+            --bg-2: #191C48;
+            --bg-3: #4A215E;
+            --accent-1: #FF8A5B;
+            --accent-2: #FF5F8A;
+            --accent-3: #F6C65B;
+            --accent-4: #8BE9FD;
+            --surface: rgba(15, 20, 45, 0.72);
+            --surface-strong: rgba(18, 25, 58, 0.92);
+            --border-soft: rgba(255, 255, 255, 0.14);
+            --text-primary: #FFF9F2;
+            --text-secondary: #D0D6E4;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background:
+                radial-gradient(circle at top left, rgba(255, 95, 138, 0.34), transparent 32%),
+                radial-gradient(circle at top right, rgba(139, 233, 253, 0.22), transparent 30%),
+                radial-gradient(circle at bottom center, rgba(246, 198, 91, 0.16), transparent 28%),
+                linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 38%, var(--bg-2) 70%, var(--bg-3) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+            overflow-x: hidden;
+            position: relative;
+            /* enlarge layers slightly for smooth movement */
+            background-size: 120% 120%, 120% 120%, 120% 120%, 200% 200%;
+            /* subtle animated shift of gradient layer positions (colors unchanged) */
+            animation: bgShift 20s ease-in-out infinite alternate;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            inset: auto;
+            pointer-events: none;
+            border-radius: 999px;
+            filter: blur(40px);
+            opacity: 0.55;
+            z-index: 0;
+        }
+
+        body::before {
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(255, 138, 91, 0.35), transparent 70%);
+            top: -90px;
+            left: -80px;
+        }
+
+        body::after {
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(139, 233, 253, 0.22), transparent 70%);
+            bottom: -140px;
+            right: -120px;
+        }
+
+        button, input, select, textarea {
+            font-family: inherit;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        /* small nav to switch to React UI */
+        .page-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 999px;
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.04);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .nav-link:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bgShift {
+            from { background-position: top left, top right, bottom center, 0% 0%; }
+            to   { background-position: 4% 6%, 96% 14%, 70% 92%, 10% 10%; }
+        }
+
+        h1 {
+            font-size: clamp(2.4rem, 5vw, 5rem);
+            background: linear-gradient(90deg, var(--accent-1) 0%, var(--accent-3) 38%, var(--accent-4) 70%, var(--accent-2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            letter-spacing: 0.03em;
+            text-shadow: 0 10px 30px rgba(255, 95, 138, 0.18);
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.05em;
+            letter-spacing: 0.04em;
+        }
+
+        .search-section {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+            margin-bottom: 34px;
+            animation: slideUp 0.6s ease-out 0.1s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        input[type="text"] {
+            padding: 15px 20px;
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            color: var(--text-primary);
+            font-size: 1em;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: rgba(255, 138, 91, 0.7);
+            box-shadow: 0 0 0 4px rgba(255, 138, 91, 0.14), 0 16px 32px rgba(0, 0, 0, 0.22);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3), var(--accent-4));
+            color: #1A1030;
+            border: none;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 14px 30px rgba(255, 138, 91, 0.26);
+        }
+
+        button:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 18px 34px rgba(255, 138, 91, 0.34);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .limit-select {
+            padding: 15px 20px;
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+            color: var(--text-primary);
+            font-size: 1em;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            animation: slideUp 0.6s ease-out 0.2s both;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .search-section {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.4em;
+            }
+        }
+
+        .section {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+        }
+
+        .section h2 {
+            margin-bottom: 20px;
+            color: var(--accent-4);
+            font-size: 1.5em;
+        }
+
+        .movie-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .movie-card:hover {
+            border-color: rgba(255, 138, 91, 0.55);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+            transform: translateY(-2px);
+        }
+
+        .movie-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #FFF2E7;
+            margin-bottom: 8px;
+        }
+
+        .movie-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .rating {
+            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-weight: bold;
+            color: #231A12;
+        }
+
+        .genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .genre-tag {
+            background: linear-gradient(135deg, rgba(255, 95, 138, 0.16), rgba(139, 233, 253, 0.14));
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            color: var(--text-primary);
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.85em;
+        }
+
+        .similarity-score {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-4), var(--accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.16);
+            border-top: 3px solid var(--accent-1);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: linear-gradient(135deg, rgba(255, 95, 138, 0.16), rgba(255, 138, 91, 0.1));
+            border: 1px solid rgba(255, 95, 138, 0.28);
+            color: #FFD1DC;
+            padding: 15px;
+            border-radius: 14px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        .scroll-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--accent-1), var(--accent-2));
+            border-radius: 10px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, var(--accent-3), var(--accent-1));
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .section::before {
+            content: '';
+            display: block;
+            height: 3px;
+            width: 100%;
+            margin-bottom: 20px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-3), var(--accent-4), var(--accent-2));
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CineMatch</h1>
+            <p class="tagline">Discover movies based on what you love</p>
+        </header>
+
+        <div class="container">
+            <header>
+                <div class="page-nav">
+                    <a class="nav-link" href="react_index.html">Open React UI</a>
+                </div>
+                <h1>CineMatch - Movie Recommendations</h1>
+                <p class="tagline">Discover your next favorite film using TF-IDF and cosine similarity.</p>
+            </header>
+                onkeypress="handleKeyPress(event)"
+            >
+            <select id="limitSelect" class="limit-select">
+                <option value="5">Top 5</option>
+                <option value="10" selected>Top 10</option>
+                <option value="15">Top 15</option>
+                <option value="20">Top 20</option>
+            </select>
+            <button onclick="searchMovies()">Search</button>
+        </div>
+
+        <div class="content">
+            <!-- Search Results -->
+            <div class="section">
+                <h2>Search Results</h2>
+                <div id="searchResults" class="scroll-container">
+                    <div class="empty-state">
+                        <p>Enter a movie title to search</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="section">
+                <h2>Recommendations</h2>
+                <div id="recommendations" class="scroll-container">
+                    <div class="empty-state">
+                        <p>Select a movie to see recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>CineMatch - Powered by TF-IDF Recommendation Engine</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = `${window.location.origin}/api`;
+        let selectedMovie = null;
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchMovies();
+            }
+        }
+
+        async function searchMovies() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(`${API_URL}/movies?limit=100`);
+                if (!response.ok) throw new Error('Failed to fetch movies');
+
+                const movies = await response.json();
+                
+                // Filter movies by search query
+                const filtered = movies.filter(m => 
+                    m.title.toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (filtered.length === 0) {
+                    searchResults.innerHTML = `<div class="error">No movies found matching "${query}"</div>`;
+                    return;
+                }
+
+                searchResults.innerHTML = filtered
+                    .slice(0, 50)
+                    .map(movie => `
+                        <div class="movie-card" onclick="selectMovie(${JSON.stringify(movie).replace(/"/g, '&quot;')})">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-meta">
+                                <span>${movie.releaseYear || 'N/A'}</span>
+                                ${movie.avgRating > 0 ? `<span class="rating">${movie.avgRating.toFixed(1)}</span>` : ''}
+                            </div>
+                            ${movie.genres && movie.genres.length > 0 ? `
+                                <div class="genres">
+                                    ${movie.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `)
+                    .join('');
+            } catch (error) {
+                searchResults.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function selectMovie(movie) {
+            selectedMovie = movie;
+            getRecommendations(movie.title);
+        }
+
+        async function getRecommendations(title) {
+            const limit = document.getElementById('limitSelect').value;
+            const recommendations = document.getElementById('recommendations');
+            recommendations.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(`${API_URL}/recommend?title=${encodeURIComponent(title)}&limit=${limit}`);
+                
+                if (response.status === 404) {
+                    recommendations.innerHTML = `<div class="error">Movie not found in database</div>`;
+                    return;
+                }
+
+                if (!response.ok) throw new Error('Failed to fetch recommendations');
+
+                const recs = await response.json();
+
+                if (recs.error) {
+                    recommendations.innerHTML = `<div class="error">${recs.error}</div>`;
+                    return;
+                }
+
+                recommendations.innerHTML = `
+                    <div style="margin-bottom: 15px; padding: 10px; background: rgba(0, 217, 255, 0.1); border-radius: 8px;">
+                        <strong>${selectedMovie?.title || title}</strong><br>
+                        <small>${recs.length} recommendations found</small>
+                    </div>
+                ` + recs.map((rec, idx) => `
+                    <div class="movie-card" style="animation: slideUp 0.3s ease-out ${idx * 0.05}s both;">
+                        <div class="movie-title">${rec.title}</div>
+                        <div class="movie-meta">
+                            <span>${rec.releaseYear || 'N/A'}</span>
+                            ${rec.avgRating > 0 ? `<span class="rating">${rec.avgRating.toFixed(1)}</span>` : ''}
+                        </div>
+                        ${rec.genres && rec.genres.length > 0 ? `
+                            <div class="genres">
+                                ${rec.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div class="similarity-score">Match: ${(rec.similarityScore * 100).toFixed(1)}%</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                recommendations.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Load all movies on page load for initial search
+        window.addEventListener('load', () => {
+            // Optional: Pre-load some data
+        });
+    </script>
+</body>
+</html>
