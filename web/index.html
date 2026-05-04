@@ -3,28 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineMatch - Movie Recommendations</title>
+    <title>CineMatch | Your Next Cinematic Obsession</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
-            --bg-0: #070B18;
-            --bg-1: #0D1430;
-            --bg-2: #191C48;
-            --bg-3: #4A215E;
-            --accent-1: #FF8A5B;
-            --accent-2: #FF5F8A;
-            --accent-3: #F6C65B;
-            --accent-4: #8BE9FD;
-            --surface: rgba(15, 20, 45, 0.72);
-            --surface-strong: rgba(18, 25, 58, 0.92);
-            --border-soft: rgba(255, 255, 255, 0.14);
-            --text-primary: #FFF9F2;
-            --text-secondary: #D0D6E4;
+            --bg: #0A0A0A;
+            --surface: rgba(18, 18, 18, 0.72);
+            --surface-strong: rgba(12, 12, 12, 0.92);
+            --text: #F5F5F5;
+            --muted: #A8A8A8;
+            --red: #E50914;
+            --gray: #6B7280;
         }
 
         html {
@@ -32,544 +26,581 @@
         }
 
         body {
-            font-family: 'Times New Roman', Times, serif;
+            margin: 0;
             background:
-                radial-gradient(circle at top left, rgba(255, 95, 138, 0.34), transparent 32%),
-                radial-gradient(circle at top right, rgba(139, 233, 253, 0.22), transparent 30%),
-                radial-gradient(circle at bottom center, rgba(246, 198, 91, 0.16), transparent 28%),
-                linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 38%, var(--bg-2) 70%, var(--bg-3) 100%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding: 24px;
+                radial-gradient(circle at top left, rgba(229, 9, 20, 0.24), transparent 28%),
+                radial-gradient(circle at top right, rgba(107, 114, 128, 0.18), transparent 30%),
+                linear-gradient(180deg, #111111 0%, #0A0A0A 48%, #070707 100%);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
             overflow-x: hidden;
-            position: relative;
-            /* enlarge layers slightly for smooth movement */
-            background-size: 120% 120%, 120% 120%, 120% 120%, 200% 200%;
-            /* subtle animated shift of gradient layer positions (colors unchanged) */
-            animation: bgShift 20s ease-in-out infinite alternate;
         }
 
-        body::before,
-        body::after {
-            content: '';
-            position: fixed;
-            inset: auto;
-            pointer-events: none;
-            border-radius: 999px;
-            filter: blur(40px);
-            opacity: 0.55;
-            z-index: 0;
+        .heading-font {
+            font-family: 'Bebas Neue', sans-serif;
+            letter-spacing: 0.08em;
         }
 
-        body::before {
-            width: 320px;
-            height: 320px;
-            background: radial-gradient(circle, rgba(255, 138, 91, 0.35), transparent 70%);
-            top: -90px;
-            left: -80px;
+        .glass {
+            background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 24px 80px rgba(0,0,0,0.35);
         }
 
-        body::after {
-            width: 420px;
-            height: 420px;
-            background: radial-gradient(circle, rgba(139, 233, 253, 0.22), transparent 70%);
-            bottom: -140px;
-            right: -120px;
+        .hero-panel {
+            background-image:
+                linear-gradient(90deg, rgba(10,10,10,0.94) 0%, rgba(10,10,10,0.82) 42%, rgba(10,10,10,0.52) 100%),
+                url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
         }
 
-        button, input, select, textarea {
-            font-family: inherit;
+        .hero-glow {
+            background: radial-gradient(circle at center, rgba(229, 9, 20, 0.28), transparent 62%);
+            filter: blur(34px);
         }
 
-        .container {
-            width: 100%;
-            max-width: 100%;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-            padding-left: 1rem;
-            padding-right: 1rem;
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 32px;
-            animation: slideDown 0.6s ease-out;
+        .poster-shadow {
+            box-shadow: 0 24px 50px rgba(0,0,0,0.45);
         }
 
-        /* small nav to switch to React UI */
-        .page-nav {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 12px;
+        .scrollbar-hidden::-webkit-scrollbar {
+            display: none;
         }
 
-        .nav-link {
-            display: inline-block;
-            padding: 10px 14px;
-            border-radius: 999px;
-            color: var(--text-primary);
-            background: rgba(255,255,255,0.04);
-            text-decoration: none;
-            font-weight: 700;
+        .scrollbar-hidden {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
-        .nav-link:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .tab-active {
+            background: linear-gradient(135deg, rgba(229,9,20,1), rgba(140,16,16,1));
+            color: white;
+            box-shadow: 0 12px 30px rgba(229,9,20,0.28);
         }
 
-        @keyframes bgShift {
-            from { background-position: top left, top right, bottom center, 0% 0%; }
-            to   { background-position: 4% 6%, 96% 14%, 70% 92%, 10% 10%; }
+        .chip-active {
+            background: rgba(229,9,20,0.92);
+            color: white;
         }
 
-        h1 {
-            font-size: clamp(2.4rem, 5vw, 5rem);
-            background: linear-gradient(90deg, var(--accent-1) 0%, var(--accent-3) 38%, var(--accent-4) 70%, var(--accent-2) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 12px;
-            letter-spacing: 0.03em;
-            text-shadow: 0 10px 30px rgba(255, 95, 138, 0.18);
+        .result-card {
+            transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
         }
 
-        .tagline {
-            color: var(--text-secondary);
-            font-size: 1.05em;
-            letter-spacing: 0.04em;
+        .result-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+            border-color: rgba(229,9,20,0.55);
         }
 
-        .search-section {
-            display: grid;
-            grid-template-columns: 1fr auto auto;
-            gap: 10px;
-            margin-bottom: 34px;
-            animation: slideUp 0.6s ease-out 0.1s both;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        input[type="text"] {
-            padding: 15px 20px;
-            border: 1px solid var(--border-soft);
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-            color: var(--text-primary);
-            font-size: 1em;
-            transition: all 0.3s ease;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.18);
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: rgba(255, 138, 91, 0.7);
-            box-shadow: 0 0 0 4px rgba(255, 138, 91, 0.14), 0 16px 32px rgba(0, 0, 0, 0.22);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.05));
-        }
-
-        button {
-            padding: 15px 30px;
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-3), var(--accent-4));
-            color: #1A1030;
-            border: none;
-            border-radius: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            box-shadow: 0 14px 30px rgba(255, 138, 91, 0.26);
-        }
-
-        button:hover {
-            transform: translateY(-2px) scale(1.01);
-            box-shadow: 0 18px 34px rgba(255, 138, 91, 0.34);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .limit-select {
-            padding: 15px 20px;
-            border: 1px solid var(--border-soft);
-            border-radius: 16px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-            color: var(--text-primary);
-            font-size: 1em;
-            cursor: pointer;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.18);
-        }
-
-        .content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 28px;
-            animation: slideUp 0.6s ease-out 0.2s both;
-        }
-
-        @media (max-width: 900px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
-
-            .search-section {
-                grid-template-columns: 1fr;
-            }
-
-            h1 {
-                font-size: 2.4em;
-            }
-        }
-
-        .section {
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
-        }
-
-        .section h2 {
-            margin-bottom: 20px;
-            color: var(--accent-4);
-            font-size: 1.5em;
-        }
-
-        .movie-card {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 18px;
-            padding: 15px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .movie-card:hover {
-            border-color: rgba(255, 138, 91, 0.55);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
-            transform: translateY(-2px);
-        }
-
-        .movie-title {
-            font-weight: bold;
-            font-size: 1.1em;
-            color: #FFF2E7;
-            margin-bottom: 8px;
-        }
-
-        .movie-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9em;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        .rating {
-            background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
-            padding: 3px 8px;
-            border-radius: 999px;
-            font-weight: bold;
-            color: #231A12;
-        }
-
-        .genres {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .genre-tag {
-            background: linear-gradient(135deg, rgba(255, 95, 138, 0.16), rgba(139, 233, 253, 0.14));
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            color: var(--text-primary);
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.85em;
-        }
-
-        .similarity-score {
-            display: inline-block;
-            background: linear-gradient(90deg, var(--accent-1), var(--accent-4), var(--accent-2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: var(--text-secondary);
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 3px solid rgba(255, 255, 255, 0.16);
-            border-top: 3px solid var(--accent-1);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error {
-            background: linear-gradient(135deg, rgba(255, 95, 138, 0.16), rgba(255, 138, 91, 0.1));
-            border: 1px solid rgba(255, 95, 138, 0.28);
-            color: #FFD1DC;
-            padding: 15px;
-            border-radius: 14px;
-            margin-bottom: 15px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-secondary);
-        }
-
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
-            opacity: 0.5;
-            margin-bottom: 20px;
-        }
-
-        .scroll-container {
-            max-height: 600px;
-            overflow-y: auto;
-        }
-
-        .scroll-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .scroll-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-        }
-
-        .scroll-container::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--accent-1), var(--accent-2));
-            border-radius: 10px;
-        }
-
-        .scroll-container::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, var(--accent-3), var(--accent-1));
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            color: var(--text-secondary);
-            font-size: 0.9em;
-        }
-
-        .section::before {
-            content: '';
-            display: block;
-            height: 3px;
-            width: 100%;
-            margin-bottom: 20px;
-            border-radius: 999px;
-            background: linear-gradient(90deg, var(--accent-1), var(--accent-3), var(--accent-4), var(--accent-2));
-            opacity: 0.9;
+        .movie-overlay {
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.1) 34%, rgba(0,0,0,0.9) 100%);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>CineMatch</h1>
-            <p class="tagline">Discover movies based on what you love</p>
-        </header>
+    <main class="min-h-screen">
+        <section class="relative min-h-[92vh] hero-panel">
+            <div class="absolute inset-0 hero-glow"></div>
+            <div class="relative z-10 mx-auto flex min-h-[92vh] max-w-7xl items-center px-4 py-8 sm:px-6 lg:px-8">
+                <div class="grid w-full gap-10 lg:grid-cols-12 lg:items-center">
+                    <div class="lg:col-span-7">
+                        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/75">
+                            <span class="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_18px_rgba(229,9,20,0.8)]"></span>
+                            ML-powered movie recommendation engine
+                        </div>
+                        <h1 class="heading-font text-6xl leading-none text-white sm:text-7xl lg:text-8xl">
+                            YOUR NEXT
+                            <span class="bg-gradient-to-r from-red-500 via-white to-slate-400 bg-clip-text text-transparent">
+                                CINEMATIC OBSESSION
+                            </span>
+                        </h1>
+                        <p class="mt-6 max-w-2xl text-base leading-7 text-white/72 sm:text-lg">
+                            Explore a movie intelligence stack that blends TF-IDF similarity, rich catalog metadata, and fast Flask APIs to surface the films you are most likely to love.
+                        </p>
+                        <div class="mt-8 flex flex-wrap items-center gap-3">
+                            <button id="tryPredictorBtn" class="rounded-full bg-red-600 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-red-500 hover:shadow-[0_18px_30px_rgba(229,9,20,0.28)]">
+                                Try Predictor
+                            </button>
+                            <button id="scrollAnalyticsBtn" class="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white/90 transition hover:bg-white/10">
+                                View Analytics
+                            </button>
+                        </div>
+                    </div>
 
-        <div class="container">
-            <header>
-                <div class="page-nav">
-                    <a class="nav-link" href="react_index.html">Open React UI</a>
-                </div>
-                <h1>CineMatch - Movie Recommendations</h1>
-                <p class="tagline">Discover your next favorite film using TF-IDF and cosine similarity.</p>
-            </header>
-                onkeypress="handleKeyPress(event)"
-            >
-            <select id="limitSelect" class="limit-select">
-                <option value="5">Top 5</option>
-                <option value="10" selected>Top 10</option>
-                <option value="15">Top 15</option>
-                <option value="20">Top 20</option>
-            </select>
-            <button onclick="searchMovies()">Search</button>
-        </div>
-
-        <div class="content">
-            <!-- Search Results -->
-            <div class="section">
-                <h2>Search Results</h2>
-                <div id="searchResults" class="scroll-container">
-                    <div class="empty-state">
-                        <p>Enter a movie title to search</p>
+                    <div class="lg:col-span-5">
+                        <div class="glass rounded-[2rem] p-6 sm:p-8">
+                            <div class="mb-5 flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs uppercase tracking-[0.3em] text-white/45">Predictor</p>
+                                    <h2 class="mt-1 text-2xl font-bold text-white">Find your next watch</h2>
+                                </div>
+                                <div class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
+                                    Live fetch
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="rounded-2xl border border-white/10 bg-black/30 px-4 py-4 shadow-inner shadow-black/30">
+                                    <label for="movieInput" class="mb-2 block text-xs uppercase tracking-[0.3em] text-white/45">Movie title</label>
+                                    <div class="flex items-center gap-3">
+                                        <i class="fa-solid fa-film text-red-500"></i>
+                                        <input id="movieInput" type="text" placeholder="Try Inception, Interstellar, Titanic..." class="w-full bg-transparent text-base text-white placeholder:text-white/35 focus:outline-none">
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap gap-2" id="quickTags"></div>
+                                <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                    <button id="searchBtn" class="rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110">
+                                        Predict
+                                    </button>
+                                    <button id="gridViewBtn" class="tab-active rounded-xl px-4 py-3 text-sm font-semibold transition">
+                                        Grid
+                                    </button>
+                                    <button id="carouselViewBtn" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/10">
+                                        Carousel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Recommendations -->
-            <div class="section">
-                <h2>Recommendations</h2>
-                <div id="recommendations" class="scroll-container">
-                    <div class="empty-state">
-                        <p>Select a movie to see recommendations</p>
+        <section class="mx-auto -mt-16 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 relative z-10">
+            <div id="resultsShell" class="hidden glass rounded-[2rem] p-4 sm:p-6">
+                <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.3em] text-white/45">Dynamic Results</p>
+                        <h2 id="resultsTitle" class="mt-1 text-2xl font-bold text-white">Featured match</h2>
+                    </div>
+                    <div class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70" id="resultsMeta">
+                        Ready to predict
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <footer>
-            <p>CineMatch - Powered by TF-IDF Recommendation Engine</p>
-        </footer>
-    </div>
+                <div id="featuredResult" class="mb-6"></div>
+
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Recommendation Row</h3>
+                        <p class="text-sm text-white/55">Hover cards to preview the title and score.</p>
+                    </div>
+                </div>
+
+                <div id="recommendationsRow" class="scrollbar-hidden overflow-x-auto pb-3"></div>
+            </div>
+
+            <div id="loadingState" class="hidden glass mt-6 rounded-[2rem] p-6 text-center text-white/75">
+                <div class="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-red-500"></div>
+                <p class="text-lg font-semibold">Running prediction engine</p>
+                <p class="mt-1 text-sm text-white/55">Fetching the closest cinematic matches.</p>
+            </div>
+
+            <section class="mt-16 grid gap-8 lg:grid-cols-12">
+                <div class="glass rounded-[2rem] p-6 lg:col-span-7">
+                    <div class="mb-5 flex items-end justify-between gap-3">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.3em] text-white/45">Analytics</p>
+                            <h2 class="mt-1 text-2xl font-bold text-white">Trending Genres</h2>
+                        </div>
+                        <div class="text-sm text-white/60">Bar counts with rating trend overlay</div>
+                    </div>
+                    <div class="h-[360px]">
+                        <canvas id="genreChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass rounded-[2rem] p-6 lg:col-span-5">
+                    <p class="text-xs uppercase tracking-[0.3em] text-white/45">Why it works</p>
+                    <h2 class="mt-1 text-2xl font-bold text-white">Technical Bento Grid</h2>
+                    <div class="mt-6 grid gap-4 sm:grid-cols-2">
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <i class="fa-solid fa-wand-magic-sparkles text-red-500"></i>
+                            <h3 class="mt-3 text-lg font-semibold text-white">Content-based ML</h3>
+                            <p class="mt-2 text-sm leading-6 text-white/60">TF-IDF builds a feature signature from titles, genres, and tags before similarity scoring.</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <i class="fa-solid fa-layer-group text-red-500"></i>
+                            <h3 class="mt-3 text-lg font-semibold text-white">Dual Catalogue</h3>
+                            <p class="mt-2 text-sm leading-6 text-white/60">The system blends MovieLens with curated metadata so the catalog feels richer and more responsive.</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <i class="fa-solid fa-star text-red-500"></i>
+                            <h3 class="mt-3 text-lg font-semibold text-white">IMDb Integration</h3>
+                            <p class="mt-2 text-sm leading-6 text-white/60">Ratings and visual badges help surface the most promising matches at a glance.</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <i class="fa-solid fa-bolt text-red-500"></i>
+                            <h3 class="mt-3 text-lg font-semibold text-white">Fast API</h3>
+                            <p class="mt-2 text-sm leading-6 text-white/60">Flask endpoints keep prediction latency low and let the UI update instantly.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
 
     <script>
-        const API_URL = `${window.location.origin}/api`;
-        let selectedMovie = null;
+        const API_CANDIDATES = ['/predict', '/api/recommend'];
+        const QUICK_TAGS = ['Inception', 'Interstellar', 'The Matrix', 'Titanic', 'Toy Story', 'The Dark Knight', 'Forrest Gump', 'Avatar'];
 
-        function handleKeyPress(event) {
+        const movieInput = document.getElementById('movieInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const tryPredictorBtn = document.getElementById('tryPredictorBtn');
+        const scrollAnalyticsBtn = document.getElementById('scrollAnalyticsBtn');
+        const quickTagsContainer = document.getElementById('quickTags');
+        const resultsShell = document.getElementById('resultsShell');
+        const loadingState = document.getElementById('loadingState');
+        const featuredResult = document.getElementById('featuredResult');
+        const recommendationsRow = document.getElementById('recommendationsRow');
+        const resultsTitle = document.getElementById('resultsTitle');
+        const resultsMeta = document.getElementById('resultsMeta');
+        const gridViewBtn = document.getElementById('gridViewBtn');
+        const carouselViewBtn = document.getElementById('carouselViewBtn');
+        const genreChartCanvas = document.getElementById('genreChart');
+
+        let resultsMode = 'carousel';
+        let latestPayload = null;
+        let genreChart = null;
+
+        function posterFallback(title, year = '', accent = '#E50914') {
+            const safeTitle = String(title || 'Movie').slice(0, 28);
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900">
+                    <defs>
+                        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#111111"/>
+                            <stop offset="55%" stop-color="#1d1d1d"/>
+                            <stop offset="100%" stop-color="${accent}"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="600" height="900" rx="40" fill="url(#g)"/>
+                    <circle cx="470" cy="160" r="150" fill="rgba(255,255,255,0.06)"/>
+                    <rect x="54" y="74" width="146" height="16" rx="8" fill="rgba(255,255,255,0.2)"/>
+                    <text x="54" y="680" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="700">${safeTitle.replace(/&/g, '&amp;')}</text>
+                    <text x="54" y="732" fill="rgba(255,255,255,0.7)" font-family="Inter, Arial, sans-serif" font-size="22">${year || 'Movie Recommendation'}</text>
+                </svg>`;
+            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
+        function normalizeResponse(data, requestedTitle) {
+            if (Array.isArray(data)) {
+                return {
+                    selectedMovie: {
+                        title: requestedTitle,
+                        year: '',
+                        rating: 0,
+                        industry: 'Featured',
+                        poster_path: posterFallback(requestedTitle, '', '#E50914'),
+                        genres: [],
+                    },
+                    recommendations: data,
+                };
+            }
+            return {
+                selectedMovie: data.selectedMovie || data.featured || data.movie || {
+                    title: requestedTitle,
+                    year: '',
+                    rating: 0,
+                    industry: 'Featured',
+                    poster_path: posterFallback(requestedTitle, '', '#E50914'),
+                    genres: [],
+                },
+                recommendations: data.recommendations || data.results || data.items || [],
+            };
+        }
+
+        function setViewMode(mode) {
+            resultsMode = mode;
+            if (mode === 'grid') {
+                gridViewBtn.classList.add('tab-active');
+                gridViewBtn.classList.remove('border', 'border-white/10', 'bg-white/5', 'text-white/80');
+                carouselViewBtn.classList.remove('tab-active');
+                carouselViewBtn.classList.add('border', 'border-white/10', 'bg-white/5', 'text-white/80');
+            } else {
+                carouselViewBtn.classList.add('tab-active');
+                carouselViewBtn.classList.remove('border', 'border-white/10', 'bg-white/5', 'text-white/80');
+                gridViewBtn.classList.remove('tab-active');
+                gridViewBtn.classList.add('border', 'border-white/10', 'bg-white/5', 'text-white/80');
+            }
+            if (latestPayload) {
+                renderRecommendations(latestPayload);
+            }
+        }
+
+        function renderFeaturedCard(movie) {
+            const poster = movie.poster_path || posterFallback(movie.title, movie.year, '#E50914');
+            const genres = Array.isArray(movie.genres) ? movie.genres : [];
+            featuredResult.innerHTML = '';
+
+            const card = document.createElement('article');
+            card.className = 'glass overflow-hidden rounded-[2rem] border border-white/10';
+            card.innerHTML = `
+                <div class="grid gap-0 lg:grid-cols-[220px_1fr]">
+                    <div class="relative min-h-[320px] bg-black/40">
+                        <img src="${poster}" alt="${movie.title || 'Featured movie'} poster" class="absolute inset-0 h-full w-full object-cover poster-shadow" onerror="this.src='${posterFallback(movie.title, movie.year, '#E50914')}'">
+                        <div class="movie-overlay absolute inset-0"></div>
+                    </div>
+                    <div class="p-6 sm:p-8">
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white">Featured Result</span>
+                            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-white/75">${movie.industry || 'Hollywood'}</span>
+                        </div>
+                        <h3 class="mt-4 text-3xl font-bold text-white sm:text-4xl">${movie.title || 'Selected Movie'}</h3>
+                        <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/70">
+                            <span><i class="fa-solid fa-calendar-days mr-2 text-red-500"></i>${movie.year || movie.releaseYear || 'N/A'}</span>
+                            <span class="rounded-full bg-white/10 px-3 py-1 font-semibold text-white">IMDb ${Number(movie.rating || movie.avgRating || 0).toFixed(1)}</span>
+                            ${movie.match_score ? `<span class="rounded-full bg-red-600/20 px-3 py-1 font-semibold text-red-200">${Math.round(movie.match_score * 100)}% Match</span>` : ''}
+                        </div>
+                        <div class="mt-5 flex flex-wrap gap-2">
+                            ${genres.map(genre => `<span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/80">${genre}</span>`).join('')}
+                        </div>
+                        <p class="mt-6 max-w-3xl text-sm leading-7 text-white/60">
+                            The selected title drives the similarity search and anchors the recommendation row below.
+                        </p>
+                    </div>
+                </div>
+            `;
+            featuredResult.appendChild(card);
+        }
+
+        function createRecommendationCard(movie, index) {
+            const wrapper = document.createElement('article');
+            wrapper.className = resultsMode === 'grid'
+                ? 'result-card group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5'
+                : 'result-card group relative min-w-[240px] max-w-[240px] overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/5';
+
+            const poster = movie.poster_path || posterFallback(movie.title, movie.releaseYear || movie.year, '#E50914');
+            const score = movie.match_score ?? movie.similarityScore ?? movie.score ?? 0;
+            const rating = movie.rating ?? movie.avgRating ?? 0;
+
+            wrapper.innerHTML = `
+                <div class="relative aspect-[2/3] overflow-hidden">
+                    <img src="${poster}" alt="${movie.title} poster" class="h-full w-full object-cover transition duration-300 group-hover:scale-110" onerror="this.src='${posterFallback(movie.title, movie.releaseYear || movie.year, '#E50914')}'">
+                    <div class="movie-overlay absolute inset-0"></div>
+                    <div class="absolute left-3 right-3 top-3 flex items-center justify-between text-xs text-white/90">
+                        <span class="rounded-full bg-black/45 px-3 py-1 backdrop-blur">${movie.industry || 'Hollywood'}</span>
+                        <span class="rounded-full bg-red-600 px-3 py-1 font-semibold text-white">${Math.round(score * 100)}% Match</span>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 p-4">
+                        <h4 class="line-clamp-2 text-lg font-bold text-white">${movie.title}</h4>
+                        <div class="mt-2 flex items-center justify-between text-sm text-white/80">
+                            <span><i class="fa-solid fa-star mr-1 text-red-500"></i>${Number(rating).toFixed(1)}</span>
+                            <span>${movie.releaseYear || movie.year || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return wrapper;
+        }
+
+        function renderRecommendations(data) {
+            const normalized = normalizeResponse(data, movieInput.value.trim());
+            latestPayload = normalized;
+            resultsShell.classList.remove('hidden');
+            loadingState.classList.add('hidden');
+
+            resultsTitle.textContent = `Results for ${normalized.selectedMovie?.title || movieInput.value.trim()}`;
+            resultsMeta.textContent = `${normalized.recommendations.length} recommendations ready`;
+
+            renderFeaturedCard(normalized.selectedMovie || {});
+
+            recommendationsRow.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            const rowClass = resultsMode === 'grid'
+                ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'
+                : 'flex gap-4';
+            recommendationsRow.className = `scrollbar-hidden overflow-x-auto pb-3 ${rowClass}`;
+
+            normalized.recommendations.forEach((movie, index) => {
+                fragment.appendChild(createRecommendationCard(movie, index));
+            });
+            recommendationsRow.appendChild(fragment);
+        }
+
+        async function requestPrediction(title) {
+            const payload = { title, limit: 10 };
+            for (const endpoint of API_CANDIDATES) {
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                    if (response.status === 404 || response.status === 405) {
+                        continue;
+                    }
+                    const message = await response.json().catch(() => ({}));
+                    throw new Error(message.error || `Request failed for ${endpoint}`);
+                } catch (error) {
+                    if (endpoint === API_CANDIDATES[API_CANDIDATES.length - 1]) {
+                        throw error;
+                    }
+                }
+            }
+            throw new Error('No prediction endpoint responded successfully.');
+        }
+
+        async function predictMovie() {
+            const title = movieInput.value.trim();
+            if (!title) {
+                movieInput.focus();
+                return;
+            }
+
+            loadingState.classList.remove('hidden');
+            resultsShell.classList.add('hidden');
+
+            try {
+                const data = await requestPrediction(title);
+                renderRecommendations(data);
+                document.getElementById('resultsShell').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (error) {
+                loadingState.classList.add('hidden');
+                resultsShell.classList.remove('hidden');
+                featuredResult.innerHTML = `<div class="glass rounded-[1.75rem] border border-red-500/30 p-6 text-red-200">Error: ${error.message}</div>`;
+                recommendationsRow.innerHTML = '';
+                resultsMeta.textContent = 'Prediction failed';
+            }
+        }
+
+        function buildQuickTags() {
+            quickTagsContainer.innerHTML = '';
+            QUICK_TAGS.forEach(tag => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/75 transition hover:bg-white/10 hover:text-white';
+                button.textContent = tag;
+                button.addEventListener('click', () => {
+                    movieInput.value = tag;
+                    predictMovie();
+                });
+                quickTagsContainer.appendChild(button);
+            });
+        }
+
+        function renderTrendingGenres(stats) {
+            const ctx = genreChartCanvas.getContext('2d');
+            const trends = stats.trendingGenres || [];
+            const labels = trends.map(item => item.genre);
+            const counts = trends.map(item => item.count);
+            const ratings = trends.map(item => item.avgRating);
+
+            if (genreChart) {
+                genreChart.destroy();
+            }
+
+            genreChart = new Chart(ctx, {
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Movie Count',
+                            data: counts,
+                            yAxisID: 'y',
+                            borderRadius: 10,
+                            backgroundColor: 'rgba(229, 9, 20, 0.7)',
+                            borderColor: '#E50914',
+                            borderWidth: 1,
+                        },
+                        {
+                            type: 'line',
+                            label: 'Average Rating',
+                            data: ratings,
+                            yAxisID: 'y1',
+                            borderColor: '#F5F5F5',
+                            backgroundColor: 'rgba(245, 245, 245, 0.1)',
+                            tension: 0.35,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#E50914',
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#F5F5F5',
+                                font: { family: 'Inter' },
+                            },
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(10,10,10,0.95)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: 'rgba(229,9,20,0.5)',
+                            borderWidth: 1,
+                        },
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#D4D4D4' },
+                            grid: { color: 'rgba(255,255,255,0.06)' },
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#D4D4D4' },
+                            grid: { color: 'rgba(255,255,255,0.06)' },
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            min: 0,
+                            max: 5,
+                            ticks: { color: '#D4D4D4' },
+                            grid: { drawOnChartArea: false },
+                        },
+                    },
+                },
+            });
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/api/stats');
+                if (!response.ok) return;
+                const stats = await response.json();
+                renderTrendingGenres(stats);
+            } catch (error) {
+                console.warn('Analytics unavailable', error);
+            }
+        }
+
+        movieInput.addEventListener('keydown', event => {
             if (event.key === 'Enter') {
-                searchMovies();
+                predictMovie();
             }
-        }
-
-        async function searchMovies() {
-            const query = document.getElementById('searchInput').value.trim();
-            if (!query) return;
-
-            const searchResults = document.getElementById('searchResults');
-            searchResults.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-
-            try {
-                const response = await fetch(`${API_URL}/movies?limit=100`);
-                if (!response.ok) throw new Error('Failed to fetch movies');
-
-                const movies = await response.json();
-                
-                // Filter movies by search query
-                const filtered = movies.filter(m => 
-                    m.title.toLowerCase().includes(query.toLowerCase())
-                );
-
-                if (filtered.length === 0) {
-                    searchResults.innerHTML = `<div class="error">No movies found matching "${query}"</div>`;
-                    return;
-                }
-
-                searchResults.innerHTML = filtered
-                    .slice(0, 50)
-                    .map(movie => `
-                        <div class="movie-card" onclick="selectMovie(${JSON.stringify(movie).replace(/"/g, '&quot;')})">
-                            <div class="movie-title">${movie.title}</div>
-                            <div class="movie-meta">
-                                <span>${movie.releaseYear || 'N/A'}</span>
-                                ${movie.avgRating > 0 ? `<span class="rating">${movie.avgRating.toFixed(1)}</span>` : ''}
-                            </div>
-                            ${movie.genres && movie.genres.length > 0 ? `
-                                <div class="genres">
-                                    ${movie.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}
-                                </div>
-                            ` : ''}
-                        </div>
-                    `)
-                    .join('');
-            } catch (error) {
-                searchResults.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-            }
-        }
-
-        function selectMovie(movie) {
-            selectedMovie = movie;
-            getRecommendations(movie.title);
-        }
-
-        async function getRecommendations(title) {
-            const limit = document.getElementById('limitSelect').value;
-            const recommendations = document.getElementById('recommendations');
-            recommendations.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-
-            try {
-                const response = await fetch(`${API_URL}/recommend?title=${encodeURIComponent(title)}&limit=${limit}`);
-                
-                if (response.status === 404) {
-                    recommendations.innerHTML = `<div class="error">Movie not found in database</div>`;
-                    return;
-                }
-
-                if (!response.ok) throw new Error('Failed to fetch recommendations');
-
-                const recs = await response.json();
-
-                if (recs.error) {
-                    recommendations.innerHTML = `<div class="error">${recs.error}</div>`;
-                    return;
-                }
-
-                recommendations.innerHTML = `
-                    <div style="margin-bottom: 15px; padding: 10px; background: rgba(0, 217, 255, 0.1); border-radius: 8px;">
-                        <strong>${selectedMovie?.title || title}</strong><br>
-                        <small>${recs.length} recommendations found</small>
-                    </div>
-                ` + recs.map((rec, idx) => `
-                    <div class="movie-card" style="animation: slideUp 0.3s ease-out ${idx * 0.05}s both;">
-                        <div class="movie-title">${rec.title}</div>
-                        <div class="movie-meta">
-                            <span>${rec.releaseYear || 'N/A'}</span>
-                            ${rec.avgRating > 0 ? `<span class="rating">${rec.avgRating.toFixed(1)}</span>` : ''}
-                        </div>
-                        ${rec.genres && rec.genres.length > 0 ? `
-                            <div class="genres">
-                                ${rec.genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}
-                            </div>
-                        ` : ''}
-                        <div class="similarity-score">Match: ${(rec.similarityScore * 100).toFixed(1)}%</div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                recommendations.innerHTML = `<div class="error">Error: ${error.message}</div>`;
-            }
-        }
-
-        // Load all movies on page load for initial search
-        window.addEventListener('load', () => {
-            // Optional: Pre-load some data
         });
+
+        searchBtn.addEventListener('click', predictMovie);
+        tryPredictorBtn.addEventListener('click', () => {
+            document.getElementById('movieInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            movieInput.focus();
+        });
+        scrollAnalyticsBtn.addEventListener('click', () => {
+            genreChartCanvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+        gridViewBtn.addEventListener('click', () => setViewMode('grid'));
+        carouselViewBtn.addEventListener('click', () => setViewMode('carousel'));
+
+        buildQuickTags();
+        loadAnalytics();
+        setViewMode('carousel');
     </script>
 </body>
 </html>

@@ -1,0 +1,45 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "run cine match backend",
+			"type": "shell",
+			"command": "./run_backend.sh",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "run cine match backend",
+			"type": "shell",
+			"command": "./run_backend.sh",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "run cine match backend",
+			"type": "shell",
+			"command": "./run_backend.sh",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "run cine match backend",
+			"type": "shell",
+			"command": "./run_backend.sh",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "run cine match backend",
+			"type": "shell",
+			"command": "./run_backend.sh",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

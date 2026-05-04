@@ -405,6 +405,7 @@
       max-width: 100%;
       width: 100%;
       background: linear-gradient(90deg, #ffffff 0%, var(--accent-a) 30%, var(--accent-d) 65%, var(--accent-c) 100%);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       animation: shimmer 12s ease infinite;
@@ -965,7 +966,10 @@
       { id: 'home', label: 'Home' },
       { id: 'how', label: 'How It Works' },
       { id: 'predictor', label: 'Predictor' },
+      { id: 'analytics', label: 'Analytics' },
     ];
+
+    const APP_PAGES = new Set(NAV_ITEMS.map((item) => item.id));
 
     const GENRE_COLORS = ['#7ef9ff', '#a855f7', '#ff8a5b', '#ffcf5b', '#88f7a2', '#70c1ff'];
 
@@ -1282,7 +1286,10 @@
     }
 
     function App() {
-      const [page, setPage] = useState('home');
+      const [page, setPage] = useState(() => {
+        const hashPage = (window.location.hash || '').replace('#', '').trim().toLowerCase();
+        return APP_PAGES.has(hashPage) ? hashPage : 'home';
+      });
       const [stats, setStats] = useState(null);
       const [statsError, setStatsError] = useState('');
       const [selectedTitle, setSelectedTitle] = useState('Dilwale Dulhania Le Jayenge (1995)');
@@ -1297,6 +1304,25 @@
       const [globalInitializing, setGlobalInitializing] = useState(false);
       const [query, setQuery] = useState('');
       const [activeLane, setActiveLane] = useState('all');
+
+      const goToPage = (nextPage) => {
+        if (!APP_PAGES.has(nextPage)) return;
+        setPage(nextPage);
+        if (window.location.hash !== `#${nextPage}`) {
+          window.location.hash = nextPage;
+        }
+      };
+
+      useEffect(() => {
+        const onHashChange = () => {
+          const hashPage = (window.location.hash || '').replace('#', '').trim().toLowerCase();
+          if (APP_PAGES.has(hashPage)) {
+            setPage(hashPage);
+          }
+        };
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+      }, []);
 
       useEffect(() => {
         let mounted = true;
@@ -1400,24 +1426,7 @@
           .then((data) => {
             if (!cancelled) {
               const backendRecs = Array.isArray(data.recommendations) ? data.recommendations : data || [];
-              // Append Bollywood picks (avoid duplicates)
-              const existingTitles = new Set(backendRecs.map((r) => (r.title || '').toLowerCase()));
-              const bollyRecs = BOLLYWOOD_PICKS
-                .filter((t) => !existingTitles.has(t.toLowerCase()))
-                .map((t) => {
-                  const profile = MOVIE_PROFILES[t] || {};
-                  return {
-                    movieId: null,
-                    title: t,
-                    genres: profile.genres || [],
-                    releaseYear: profile.year || null,
-                    similarityScore: 0,
-                    avgRating: 0,
-                    ratingCount: 0,
-                  };
-                });
-
-              setRecommendations([...backendRecs, ...bollyRecs]);
+              setRecommendations(backendRecs.slice(0, 8));
             }
           })
           .catch((error) => {
@@ -1440,7 +1449,7 @@
         const q = getQueryParam('title');
         if (q) {
           setSelectedTitle(q);
-          setPage('predictor');
+          goToPage('predictor');
         }
       }, []);
 
@@ -1467,31 +1476,39 @@
         return catalog.find((movie) => movie.title === selectedTitle) || null;
       }, [catalog, selectedTitle]);
 
+      const selectedRecommendation = useMemo(() => {
+        return recommendations.find((movie) => movie.title === selectedTitle) || null;
+      }, [recommendations, selectedTitle]);
+
+      const selectedMovieData = selectedMovie || selectedRecommendation || null;
+
       const selectedProfile = getMovieProfile(selectedTitle);
 
       const genrePieData = useMemo(() => {
-        const genres = selectedMovie && Array.isArray(selectedMovie.genres)
-          ? selectedMovie.genres
+        const genres = selectedMovieData && Array.isArray(selectedMovieData.genres)
+          ? selectedMovieData.genres
           : selectedProfile.genres;
         return genres.length
           ? genres.map((genre, index) => ({ name: genre, value: 1, color: chartColors[index % chartColors.length] }))
           : [{ name: 'No data', value: 1, color: '#44506f' }];
-      }, [selectedMovie, selectedProfile]);
+      }, [selectedMovieData, selectedProfile]);
+
+      const predictorRecommendations = useMemo(() => recommendations.slice(0, 8), [recommendations]);
 
       const recommendationTrend = useMemo(() => {
-        return recommendations.map((item, index) => ({
+        return predictorRecommendations.map((item, index) => ({
           rank: index + 1,
           similarity: Number((item.similarityScore ?? item.similarity ?? 0) * 100).toFixed(1),
           rating: Number(item.avgRating ?? 0).toFixed(1),
         }));
-      }, [recommendations]);
+      }, [predictorRecommendations]);
 
       const recommendationBars = useMemo(() => {
-        return recommendations.map((item, index) => ({
+        return predictorRecommendations.map((item, index) => ({
           rank: String(index + 1),
           similarity: Number((item.similarityScore ?? item.similarity ?? 0) * 100),
         }));
-      }, [recommendations]);
+      }, [predictorRecommendations]);
 
       const radarData = [
         { metric: 'Data', value: 95 },
@@ -1515,7 +1532,7 @@
 
       const selectMovie = (title) => {
         setSelectedTitle(title);
-        setPage('predictor');
+        goToPage('predictor');
         // update shareable URL
         try {
           const url = new URL(window.location.href);
@@ -1561,8 +1578,9 @@
                 the recommendation flow, and show similarity-based predictions in a single interactive experience.
               </p>
               <div className="hero-actions">
-                <button className="primary-btn" onClick={() => setPage('predictor')}>Open Predictor</button>
-                <button className="secondary-btn" onClick={() => setPage('how')}>See How It Works</button>
+                <button className="primary-btn" onClick={() => goToPage('predictor')}>Open Predictor</button>
+                <button className="secondary-btn" onClick={() => goToPage('analytics')}>Open Analytics</button>
+                <button className="secondary-btn" onClick={() => goToPage('how')}>See How It Works</button>
               </div>
             </div>
             <div className="hero-home-visual" aria-hidden="true">
@@ -1815,22 +1833,22 @@
                 <p className="eyebrow">Selected title</p>
                 <h3>{selectedTitle}</h3>
                 <div className="tag-row">
-                  <span className="tag">{selectedMovie ? inferCategory(selectedMovie.title) : selectedProfile.category}</span>
-                  <span className="tag">{selectedMovie ? String(selectedMovie.releaseYear || 'Year unknown') : String(selectedProfile.year || 'Year unknown')}</span>
-                  <span className="tag">{selectedMovie ? labelGenres(selectedMovie.genres) : labelGenres(selectedProfile.genres)}</span>
+                  <span className="tag">{selectedMovieData ? inferCategory(selectedMovieData.title) : selectedProfile.category}</span>
+                  <span className="tag">{selectedMovieData ? String(selectedMovieData.releaseYear || 'Year unknown') : String(selectedProfile.year || 'Year unknown')}</span>
+                  <span className="tag">{selectedMovieData ? labelGenres(selectedMovieData.genres) : labelGenres(selectedProfile.genres)}</span>
                 </div>
                 <div className="score-grid">
                   <div className="score-box">
                     <strong>IMDb rating</strong>
-                    <span>{selectedMovie ? Number(selectedMovie.avgRating || 0).toFixed(1) : '—'}</span>
+                    <span>{selectedMovieData ? Number(selectedMovieData.avgRating ?? selectedMovieData.avg_rating ?? 0).toFixed(1) : '—'}</span>
                   </div>
                   <div className="score-box">
                     <strong>Votes</strong>
-                    <span>{selectedMovie ? Number(selectedMovie.ratingCount || 0).toLocaleString() : '—'}</span>
+                    <span>{selectedMovieData ? Number(selectedMovieData.ratingCount ?? selectedMovieData.rating_count ?? 0).toLocaleString() : '—'}</span>
                   </div>
                   <div className="score-box">
                     <strong>Category</strong>
-                    <span>{selectedMovie ? inferCategory(selectedMovie.title) : inferCategory(selectedTitle)}</span>
+                    <span>{selectedMovieData ? inferCategory(selectedMovieData.title) : inferCategory(selectedTitle)}</span>
                   </div>
                 </div>
                 <p className="footer-note">
@@ -1838,24 +1856,26 @@
                 </p>
                 <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                   <button className="primary-btn" onClick={() => copyShareLink(selectedTitle)}>Copy share link</button>
-                  {selectedMovie && selectedMovie.movieId ? (
-                    <button className="secondary-btn" onClick={() => toggleFavorite(Number(selectedMovie.movieId))}>
-                      {favorites.includes(Number(selectedMovie.movieId)) ? 'Remove favorite' : 'Save favorite'}
+                  {selectedMovieData && selectedMovieData.movieId ? (
+                    <button className="secondary-btn" onClick={() => toggleFavorite(Number(selectedMovieData.movieId))}>
+                      {favorites.includes(Number(selectedMovieData.movieId)) ? 'Remove favorite' : 'Save favorite'}
                     </button>
                   ) : null}
+                  <button className="secondary-btn" onClick={() => goToPage('analytics')}>View analytics</button>
                 </div>
               </div>
 
-              <div className="charts-grid">
+              <div className="grid cols-2" style={{ marginTop: '18px' }}>
                 <article className="card">
                   <div className="section-title">
                     <div>
                       <p className="eyebrow">Similarity</p>
                       <h2>Ranked prediction curve</h2>
                     </div>
+                    <p>Top 8 related movies</p>
                   </div>
                   <div className="chart-wrap" style={{ height: '260px' }}>
-                    <SimpleAreaChart data={recommendationTrend} />
+                    {predictorRecommendations.length ? <SimpleAreaChart data={recommendationTrend} /> : <div className="empty">Select a title to view similarity by rank.</div>}
                   </div>
                 </article>
 
@@ -1863,8 +1883,9 @@
                   <div className="section-title">
                     <div>
                       <p className="eyebrow">Genres</p>
-                      <h2>Selected movie mix</h2>
+                      <h2>Genre composition</h2>
                     </div>
+                    <p>Selected title breakdown</p>
                   </div>
                   <div className="chart-wrap" style={{ height: '260px' }}>
                     <SimplePieChart data={genrePieData} />
@@ -1880,7 +1901,7 @@
                 <p className="eyebrow">Recommendations</p>
                 <h2>Top matches returned by the model</h2>
               </div>
-              <p>{predictorLoading ? 'Fetching results' : `${recommendations.length} results`}</p>
+              <p>{predictorLoading ? 'Fetching results' : `${predictorRecommendations.length} results`}</p>
             </div>
 
             {predictorError ? <div className="empty">{predictorError}</div> : null}
@@ -1888,7 +1909,7 @@
             <div className="recommendations" style={{ marginTop: '14px' }}>
               {predictorLoading ? (
                 <div className="status"><span className="loader"></span>Loading recommendations...</div>
-              ) : recommendations.length ? recommendations.map((movie, index) => {
+              ) : predictorRecommendations.length ? predictorRecommendations.map((movie, index) => {
                 const genres = Array.isArray(movie.genres) ? movie.genres : [];
                 const rating = Number(movie.avgRating ?? movie.avg_rating ?? 0).toFixed(1);
                 const score = Number((movie.similarityScore ?? movie.similarity ?? 0) * 100).toFixed(1);
@@ -1918,32 +1939,117 @@
                 <div className="empty">Select a movie to see ranked recommendations.</div>
               )}
             </div>
+          </section>
+        </>
+      );
 
-            <div className="grid cols-2" style={{ marginTop: '18px' }}>
-              <article className="card">
-                <div className="section-title">
-                  <div>
-                    <p className="eyebrow">Similarity bars</p>
-                    <h2>Match strength by rank</h2>
-                  </div>
+      const renderAnalytics = () => (
+        <>
+          <section className="hero">
+            <p className="eyebrow">Analytics</p>
+            <h1 className="page-title">Recommendation analytics and model signals</h1>
+            <p className="hero-copy">
+              Inspect how the current recommendation set behaves across similarity, ratings, and genre distribution.
+              This page is focused on visual diagnostics while Predictor stays focused on search and selection.
+            </p>
+          </section>
+
+          <section className="grid cols-3" aria-label="analytics metrics">
+            {statsCards.map((item) => (
+              <article className="card stat" key={`analytics-${item.label}`}>
+                <div>
+                  <p className="eyebrow">Dataset metric</p>
+                  <div className="stat-value">{item.value}</div>
                 </div>
-                <div className="chart-wrap" style={{ height: '280px' }}>
+                <div className="stat-label">{item.label}</div>
+              </article>
+            ))}
+          </section>
+
+          <section className="grid cols-2" style={{ marginTop: '18px' }}>
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Similarity</p>
+                  <h2>Ranked prediction curve</h2>
+                </div>
+                <p>{recommendations.length ? `${recommendations.length} recommendation points` : 'No predictions yet'}</p>
+              </div>
+              <div className="chart-wrap" style={{ height: '280px' }}>
+                {recommendations.length ? <SimpleAreaChart data={recommendationTrend} /> : <div className="empty">Run a prediction from the Predictor page to see the curve.</div>}
+              </div>
+            </article>
+
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Selected movie</p>
+                  <h2>Genre composition</h2>
+                </div>
+                <p>{selectedTitle}</p>
+              </div>
+              <div className="chart-wrap" style={{ height: '280px' }}>
+                <SimplePieChart data={genrePieData} />
+              </div>
+            </article>
+          </section>
+
+          <section className="grid cols-2" style={{ marginTop: '18px' }}>
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Match strength</p>
+                  <h2>Similarity bars by rank</h2>
+                </div>
+              </div>
+              <div className="chart-wrap" style={{ height: '280px' }}>
+                {recommendations.length ? (
                   <SimpleBarChart data={recommendationBars.map((item) => ({ name: item.rank, value: item.similarity }))} />
-                </div>
-              </article>
+                ) : (
+                  <div className="empty">Prediction data will appear here after selecting a movie.</div>
+                )}
+              </div>
+            </article>
 
-              <article className="card">
-                <div className="section-title">
-                  <div>
-                    <p className="eyebrow">Rating curve</p>
-                    <h2>Average ratings alongside prediction rank</h2>
-                  </div>
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Rating behavior</p>
+                  <h2>Average ratings by rank</h2>
                 </div>
-                <div className="chart-wrap" style={{ height: '280px' }}>
-                  <SimpleLineChart data={recommendationTrend} />
+              </div>
+              <div className="chart-wrap" style={{ height: '280px' }}>
+                {recommendations.length ? <SimpleLineChart data={recommendationTrend} /> : <div className="empty">Prediction data will appear here after selecting a movie.</div>}
+              </div>
+            </article>
+          </section>
+
+          <section className="grid cols-2" style={{ marginTop: '18px' }}>
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">Catalog shape</p>
+                  <h2>Top genres in dataset</h2>
                 </div>
-              </article>
-            </div>
+                <p>From /api/stats</p>
+              </div>
+              <div className="chart-wrap" style={{ height: '280px' }}>
+                {topGenres.length ? <SimpleBarChart data={topGenres} /> : statsError ? <div className="empty">{statsError}</div> : <div className="empty">Loading statistics...</div>}
+              </div>
+            </article>
+
+            <article className="card">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">System perspective</p>
+                  <h2>Pipeline balance radar</h2>
+                </div>
+                <p>Data to Visualization</p>
+              </div>
+              <div className="chart-wrap" style={{ height: '280px' }}>
+                <SimpleRadarChart data={radarData} />
+              </div>
+            </article>
           </section>
         </>
       );
@@ -1971,7 +2077,7 @@
                 <button
                   key={item.id}
                   className={page === item.id ? 'active' : ''}
-                  onClick={() => setPage(item.id)}
+                  onClick={() => goToPage(item.id)}
                 >
                   {item.label}
                 </button>
@@ -1979,9 +2085,24 @@
             </nav>
           </header>
 
+          <section className="card" style={{ marginBottom: '18px' }} aria-label="Page menu">
+            <div className="section-title">
+              <div>
+                <p className="eyebrow">Menu</p>
+                <h2>Project Pages</h2>
+              </div>
+              <p>Use this menu to switch between Predictor and Analytics pages.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button className={page === 'predictor' ? 'primary-btn' : 'secondary-btn'} onClick={() => goToPage('predictor')}>Predictor Page</button>
+              <button className={page === 'analytics' ? 'primary-btn' : 'secondary-btn'} onClick={() => goToPage('analytics')}>Analytics Page</button>
+            </div>
+          </section>
+
           {page === 'home' ? renderHome() : null}
           {page === 'how' ? renderHowItWorks() : null}
           {page === 'predictor' ? renderPredictor() : null}
+          {page === 'analytics' ? renderAnalytics() : null}
         </div>
       );
     }

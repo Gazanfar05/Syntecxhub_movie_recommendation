@@ -17,10 +17,11 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime
 from functools import wraps
+from urllib.parse import quote_plus
 
 import numpy as np
 import pandas as pd
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, make_response
 from flask_cors import CORS
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -226,17 +227,58 @@ class RecommendationEngine:
             return {}
         
         genres = defaultdict(int)
+        genre_ratings = defaultdict(list)
         for genre_str in self.movies_df["genres"].fillna(""):
             if isinstance(genre_str, str):
                 for g in genre_str.split("|"):
                     genres[g] += 1
+        for _, row in self.movies_df.iterrows():
+            if isinstance(row["genres"], str):
+                for g in row["genres"].split("|"):
+                    genre_ratings[g].append(float(row["avg_rating"]))
+
+        trending_genres = []
+        for genre, count in sorted(genres.items(), key=lambda x: x[1], reverse=True)[:12]:
+            ratings = genre_ratings.get(genre, [])
+            trending_genres.append({
+                "genre": genre,
+                "count": int(count),
+                "avgRating": round(float(np.mean(ratings)) if ratings else 0.0, 3),
+            })
         
         return {
             "totalMovies": len(self.movies_df),
             "avgRating": float(self.movies_df["avg_rating"].mean()),
             "avgRatingCount": float(self.movies_df["rating_count"].mean()),
             "topGenres": dict(sorted(genres.items(), key=lambda x: x[1], reverse=True)[:10]),
+            "trendingGenres": trending_genres,
         }
+
+    def poster_url(self, title: str, movie_id: int | None = None) -> str:
+        safe_title = quote_plus((title or "Movie")[:36])
+        suffix = f"&id={movie_id}" if movie_id is not None else ""
+        return f"https://placehold.co/300x450/0A0A0A/E50914?text={safe_title}{suffix}"
+
+    def infer_industry(self, title: str) -> str:
+        bollywood_keywords = {
+            "dil", "kabhi", "sholay", "lagaan", "don", "3 idiots", "pk",
+            "kal ho naa ho", "devdas", "mohabbatein", "taare zameen", "dangal",
+            "zindagi", "kaho naa", "baazigar", "queen", "sultan", "raees",
+        }
+        lowered = (title or "").lower()
+        return "Bollywood" if any(keyword in lowered for keyword in bollywood_keywords) else "Hollywood"
+
+    def find_movie(self, title: str):
+        if self.movies_df is None:
+            return None
+        query = self._normalize_title(title.lower())
+        exact = self.movies_df[self.movies_df["match_title"].str.lower() == query]
+        if not exact.empty:
+            return exact.iloc[0]
+        partial = self.movies_df[self.movies_df["match_title"].str.contains(query, na=False)]
+        if not partial.empty:
+            return partial.iloc[0]
+        return None
 
     # --------------------
     # Caching helpers
@@ -346,8 +388,13 @@ def create_app(engine):
         """Serve the web UI"""
         react_index = os.path.join('web', 'react_index.html')
         if os.path.exists(react_index):
-            return send_from_directory('web', 'react_index.html')
-        return send_from_directory('web', 'index.html')
+            response = make_response(send_from_directory('web', 'react_index.html'))
+        else:
+            response = make_response(send_from_directory('web', 'index.html'))
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
     
     @app.route("/api/health", methods=["GET"])
     @rate_limit(max_requests=100)
@@ -390,6 +437,7 @@ def create_app(engine):
             result.append({
                 "movieId": int(row["movieId"]),
                 "title": row["title"],
+                "poster_path": engine.poster_url(row["title"], int(row["movieId"])),
                 "genres": row["genres"].split("|") if isinstance(row["genres"], str) else [],
                 "releaseYear": int(row["release_year"]) if pd.notna(row["release_year"]) else 0,
                 "imdbId": 0,
@@ -427,6 +475,10 @@ def create_app(engine):
             
             if not recommendations:
                 return jsonify({"error": f"Movie \"{title}\" not found"}), 404
+
+            for rec in recommendations:
+                rec["poster_path"] = engine.poster_url(rec.get("title", "Movie"), rec.get("movieId"))
+                rec["industry"] = engine.infer_industry(rec.get("title", ""))
             
             # Cache the result
             cache[cache_key] = (recommendations, time.time())
@@ -435,6 +487,51 @@ def create_app(engine):
         
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    @app.route("/predict", methods=["POST"])
+    @rate_limit(max_requests=30)
+    def predict():
+        """Frontend-friendly prediction endpoint."""
+        if not engine.initialized:
+            return jsonify({"error": "Engine not initialized"}), 503
+
+        payload = request.get_json(silent=True) or request.form or {}
+        title = str(payload.get("title", "")).strip()
+        limit = int(payload.get("limit", 10))
+
+        if not title:
+            return jsonify({"error": "Movie title required"}), 400
+
+        selected = engine.find_movie(title)
+        if selected is None:
+            return jsonify({"error": f"Movie \"{title}\" not found"}), 404
+
+        recommendations = engine.get_recommendations(title, min(limit, 50))
+        selected_movie = {
+            "movieId": int(selected["movieId"]),
+            "title": selected["title"],
+            "year": int(selected["release_year"]) if pd.notna(selected["release_year"]) else 0,
+            "poster_path": engine.poster_url(selected["title"], int(selected["movieId"])),
+            "industry": engine.infer_industry(selected["title"]),
+            "rating": float(selected["avg_rating"]) if pd.notna(selected["avg_rating"]) else 0.0,
+            "genres": selected["genres"].split("|") if isinstance(selected["genres"], str) else [],
+        }
+
+        recommendation_cards = []
+        for rec in recommendations:
+            recommendation_cards.append({
+                **rec,
+                "poster_path": engine.poster_url(rec["title"], rec.get("movieId")),
+                "industry": engine.infer_industry(rec["title"]),
+                "rating": rec.get("avgRating", 0.0),
+                "match_score": rec.get("similarityScore", 0.0),
+            })
+
+        return jsonify({
+            "query": title,
+            "selectedMovie": selected_movie,
+            "recommendations": recommendation_cards,
+        }), 200
     
     @app.route("/api/stats", methods=["GET"])
     @rate_limit(max_requests=100)
@@ -459,6 +556,7 @@ def create_app(engine):
         return jsonify({
             "movieId": int(row["movieId"]),
             "title": row["title"],
+            "poster_path": engine.poster_url(row["title"], int(row["movieId"])),
             "genres": row["genres"].split("|") if isinstance(row["genres"], str) else [],
             "releaseYear": int(row["release_year"]) if pd.notna(row["release_year"]) else 0,
             "avgRating": float(row["avg_rating"]) if pd.notna(row["avg_rating"]) else 0.0,
